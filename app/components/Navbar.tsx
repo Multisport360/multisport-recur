@@ -10,7 +10,6 @@ const links = [
   { label: "Training", href: "/training" },
   { label: "Nutrition", href: "/nutrition" },
   { label: "Community", href: "/community" },
-  { label: "Merch", href: "/#merch" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -41,12 +40,12 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <a
-              href="#request-form"
+            <Link
+              href="/get-your-page"
               className="text-sm font-black bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#0a0f1e] px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-lg shadow-[#38bdf8]/20 ml-2 uppercase tracking-wide"
             >
               Get Your Page
-            </a>
+            </Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -75,13 +74,13 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <a
-            href="#request-form"
+          <Link
+            href="/get-your-page"
             onClick={() => setMenuOpen(false)}
             className="text-sm font-black bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#0a0f1e] px-5 py-3 rounded-full text-center transition-colors mt-2 uppercase tracking-wide"
           >
             Get Your Page
-          </a>
+          </Link>
         </div>
       )}
     </nav>
