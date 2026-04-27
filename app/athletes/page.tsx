@@ -43,7 +43,7 @@ export default function AthletesPage() {
               Meet The <span className="text-[#38bdf8]">Athletes</span>
             </h1>
             <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
-              Real athletes. Real stories. Built for the versatile.
+              Real athletes. Real stories. Built for the resilient.
             </p>
           </div>
         </section>

@@ -5,8 +5,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Link from "next/link";
 
-type Tab = "Bulking" | "Performance" | "Sport-Specific";
-const TABS: Tab[] = ["Bulking", "Performance", "Sport-Specific"];
+type Tab = "Bulking" | "Calorie Deficit" | "Performance" | "Sport-Specific";
+const TABS: Tab[] = ["Bulking", "Calorie Deficit", "Performance", "Sport-Specific"];
 
 /* ─── Bulking ─────────────────────────────────────────── */
 
@@ -29,6 +29,60 @@ const bulkMealPlan = [
   { meal: "Post-Workout", time: "6:30 PM", foods: "Whey protein shake (50g protein), 1 cup white rice, 1 cup chocolate milk" },
   { meal: "Dinner", time: "8:00 PM", foods: "8oz lean ground beef, 1.5 cups pasta, marinara sauce, side salad with olive oil" },
   { meal: "Night Snack", time: "10:00 PM", foods: "1 cup cottage cheese, 1 tbsp honey, handful of almonds" },
+];
+
+/* ─── Calorie Deficit ─────────────────────────────────── */
+
+const deficitTargets = [
+  { size: "Lightweight", weight: "Under 140 lbs", calories: "1,800–2,000" },
+  { size: "Medium Athletes", weight: "140–180 lbs", calories: "2,000–2,300" },
+  { size: "Heavyweight", weight: "Over 180 lbs", calories: "2,300–2,600" },
+];
+
+const deficitRules = [
+  "Never cut more than 500 calories below maintenance",
+  "Keep protein high — 1 gram per pound of bodyweight minimum",
+  "Time your carbs around training — eat them before and after workouts",
+  "Do not skip meals — eat 4 to 5 smaller meals throughout the day",
+  "Stay hydrated — drink at least half your bodyweight in ounces of water",
+  "One rest day per week where you eat at maintenance calories",
+  "If performance drops significantly you are cutting too aggressively",
+];
+
+const deficitFoodGroups = [
+  {
+    category: "Lean Proteins",
+    color: "border-[#38bdf8]/20 bg-[#38bdf8]/5",
+    labelColor: "text-[#38bdf8]",
+    items: ["Chicken breast", "Turkey", "Tilapia", "Egg whites", "Greek yogurt"],
+  },
+  {
+    category: "Complex Carbs",
+    color: "border-blue-500/20 bg-blue-500/5",
+    labelColor: "text-blue-400",
+    items: ["Brown rice", "Sweet potato", "Oatmeal", "Quinoa"],
+  },
+  {
+    category: "Healthy Fats",
+    color: "border-amber-500/20 bg-amber-500/5",
+    labelColor: "text-amber-400",
+    items: ["Avocado", "Almonds", "Olive oil", "Peanut butter (in moderation)"],
+  },
+  {
+    category: "High Volume / Low Calorie",
+    color: "border-emerald-500/20 bg-emerald-500/5",
+    labelColor: "text-emerald-400",
+    items: ["Broccoli", "Spinach", "Peppers", "Cucumbers", "Watermelon", "Berries"],
+  },
+];
+
+const deficitMealPlan = [
+  { meal: "Meal 1", time: "7 AM", foods: "4 egg whites scrambled with spinach, 1 slice whole wheat toast, black coffee" },
+  { meal: "Meal 2", time: "10 AM", foods: "Greek yogurt with blueberries and a drizzle of honey" },
+  { meal: "Meal 3", time: "1 PM", foods: "Grilled chicken breast, brown rice, steamed broccoli" },
+  { meal: "Meal 4 — Pre Workout", time: "4 PM", foods: "Apple with 1 tablespoon peanut butter" },
+  { meal: "Meal 5 — Post Workout", time: "7 PM", foods: "Baked tilapia, sweet potato, mixed green salad with olive oil dressing" },
+  { meal: "Before Bed", time: "", foods: "Casein protein shake or cottage cheese" },
 ];
 
 /* ─── Performance / Pre-Game ─────────────────────────── */
@@ -176,12 +230,12 @@ export default function NutritionPage() {
         {/* Tabs */}
         <section className="px-4 sticky top-16 z-40 bg-[#0a0f1e]/95 backdrop-blur-md border-b border-white/5">
           <div className="max-w-6xl mx-auto">
-            <div className="flex gap-1 py-3">
+            <div className="flex gap-1 py-3 overflow-x-auto scrollbar-hide">
               {TABS.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 sm:flex-none text-sm font-black px-6 py-2.5 rounded-full border transition-all ${
+                  className={`shrink-0 text-sm font-black px-6 py-2.5 rounded-full border transition-all whitespace-nowrap ${
                     activeTab === tab
                       ? "bg-[#38bdf8] border-[#38bdf8] text-white shadow-lg shadow-[#38bdf8]/20"
                       : "border-white/10 text-gray-400 hover:border-white/30 hover:text-white"
@@ -198,7 +252,6 @@ export default function NutritionPage() {
         {activeTab === "Bulking" && (
           <div className="py-16 px-4">
             <div className="max-w-6xl mx-auto space-y-16">
-              {/* Header */}
               <div>
                 <p className="text-[#38bdf8] font-bold text-xs uppercase tracking-widest mb-3">Bulking</p>
                 <h2 className="text-4xl font-black text-white mb-3">Build Muscle Without Losing Speed</h2>
@@ -207,7 +260,6 @@ export default function NutritionPage() {
                 </p>
               </div>
 
-              {/* Calorie targets */}
               <div>
                 <h3 className="text-xl font-black text-white mb-6">Daily Calorie Targets by Size</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -238,7 +290,6 @@ export default function NutritionPage() {
                 </div>
               </div>
 
-              {/* Top bulking foods + meal plan */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div>
                   <h3 className="text-xl font-black text-white mb-5">Top 10 Bulking Foods for Athletes</h3>
@@ -273,6 +324,132 @@ export default function NutritionPage() {
           </div>
         )}
 
+        {/* ── CALORIE DEFICIT ── */}
+        {activeTab === "Calorie Deficit" && (
+          <div className="py-16 px-4">
+            <div className="max-w-6xl mx-auto space-y-16">
+
+              {/* Header */}
+              <div>
+                <p className="text-[#38bdf8] font-bold text-xs uppercase tracking-widest mb-3">Calorie Deficit</p>
+                <h2 className="text-4xl font-black text-white mb-3">Fuel Smart. Stay Lean. Stay Fast.</h2>
+                <p className="text-gray-400 max-w-xl leading-relaxed">
+                  Cutting weight as an athlete means protecting muscle, keeping energy high, and staying sharp on the field. Here is how to do it the right way.
+                </p>
+              </div>
+
+              {/* Calorie targets */}
+              <div>
+                <h3 className="text-xl font-black text-white mb-6">Daily Calorie Targets for Athletes Cutting Weight</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {deficitTargets.map((t) => (
+                    <div key={t.size} className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 hover:border-[#38bdf8]/30 transition-colors">
+                      <p className="text-xs font-black text-[#38bdf8] uppercase tracking-widest mb-1">{t.size}</p>
+                      <p className="text-gray-500 text-xs mb-4">{t.weight}</p>
+                      <p className="text-3xl font-black text-white mb-5">{t.calories}</p>
+                      <p className="text-xs text-gray-600">calories / day</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Macro breakdown */}
+              <div>
+                <h3 className="text-xl font-black text-white mb-6">Macro Breakdown for Calorie Deficit</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { label: "Protein", pct: "40%", color: "bg-[#38bdf8]", barColor: "bg-[#38bdf8]", note: "Preserves muscle while cutting" },
+                    { label: "Carbs", pct: "35%", color: "bg-blue-400", barColor: "bg-blue-500", note: "Enough fuel for training" },
+                    { label: "Fats", pct: "25%", color: "bg-amber-400", barColor: "bg-amber-500", note: "Supports hormones and recovery" },
+                  ].map((macro) => (
+                    <div key={macro.label} className="bg-[#0f172a] border border-white/10 rounded-2xl p-6">
+                      <div className="flex items-end justify-between mb-3">
+                        <p className="text-sm font-black text-white">{macro.label}</p>
+                        <p className={`text-3xl font-black ${macro.color}`}>{macro.pct}</p>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden mb-3">
+                        <div className={`h-full ${macro.barColor} rounded-full`} style={{ width: macro.pct }} />
+                      </div>
+                      <p className="text-xs text-gray-500">{macro.note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key rules + foods */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                {/* Rules */}
+                <div>
+                  <h3 className="text-xl font-black text-white mb-5">Key Rules for Athletes in a Deficit</h3>
+                  <ul className="space-y-3">
+                    {deficitRules.map((rule, i) => (
+                      <li key={i} className="flex items-start gap-3 bg-[#0f172a] border border-white/5 rounded-xl px-4 py-3.5 text-sm text-gray-400">
+                        <span className="w-6 h-6 rounded-full bg-[#38bdf8]/10 text-[#38bdf8] text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        {rule}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Foods */}
+                <div>
+                  <h3 className="text-xl font-black text-white mb-5">Foods to Prioritize During a Deficit</h3>
+                  <div className="space-y-4">
+                    {deficitFoodGroups.map((group) => (
+                      <div key={group.category} className={`border rounded-2xl p-5 ${group.color}`}>
+                        <p className={`text-xs font-black uppercase tracking-widest mb-3 ${group.labelColor}`}>{group.category}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {group.items.map((item) => (
+                            <span key={item} className="text-xs text-gray-300 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Meal plan */}
+              <div>
+                <h3 className="text-xl font-black text-white mb-5">Sample 1-Day Calorie Deficit Meal Plan</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {deficitMealPlan.map((m) => (
+                    <div key={m.meal} className="bg-[#0f172a] border border-white/5 rounded-xl px-5 py-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xs font-black text-[#38bdf8] uppercase tracking-wider">{m.meal}</span>
+                        {m.time && <span className="text-xs text-gray-600">{m.time}</span>}
+                      </div>
+                      <p className="text-sm text-gray-500 leading-relaxed">{m.foods}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="bg-amber-500/5 border border-amber-500/25 rounded-2xl p-6 sm:p-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-amber-400 uppercase tracking-widest mb-2">Important</p>
+                    <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                      Athletes under 16 should not aggressively cut calories without guidance from a doctor or nutritionist. Growing athletes need adequate fuel. If you are unsure about your calorie needs talk to a professional before starting any deficit plan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* ── PERFORMANCE ── */}
         {activeTab === "Performance" && (
           <div className="py-16 px-4">
@@ -285,19 +462,16 @@ export default function NutritionPage() {
                 </p>
               </div>
 
-              {/* Timeline */}
               <div className="relative">
                 <div className="hidden md:block absolute left-[2.4rem] top-16 bottom-16 w-px bg-gradient-to-b from-[#38bdf8]/40 via-[#38bdf8]/20 to-transparent" />
                 <div className="space-y-5">
                   {pregameTimeline.map((item) => (
                     <div key={item.time} className="flex gap-6">
-                      {/* Circle */}
                       <div className="hidden md:flex flex-col items-center shrink-0">
                         <div className="w-[4.8rem] h-[4.8rem] rounded-full border-2 border-[#38bdf8]/40 bg-[#38bdf8]/10 flex flex-col items-center justify-center text-center">
                           <span className="text-2xl">{item.icon}</span>
                         </div>
                       </div>
-                      {/* Card */}
                       <div className="flex-1 bg-[#0f172a] border border-white/10 rounded-2xl p-6 hover:border-[#38bdf8]/30 transition-colors">
                         <div className="flex flex-wrap items-center gap-3 mb-4">
                           <span className="md:hidden text-2xl">{item.icon}</span>
@@ -334,7 +508,6 @@ export default function NutritionPage() {
                 </div>
               </div>
 
-              {/* Foods to avoid */}
               <div>
                 <h3 className="text-xl font-black text-white mb-5">Foods to Always Avoid Before Competing</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -362,7 +535,6 @@ export default function NutritionPage() {
                 </p>
               </div>
 
-              {/* Sport cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {sportNutrition.map((s) => (
                   <div
@@ -389,7 +561,6 @@ export default function NutritionPage() {
                 ))}
               </div>
 
-              {/* Multi-sport schedule tips */}
               <div>
                 <h3 className="text-xl font-black text-white mb-2">Timing Nutrition Around Multi-Sport Schedules</h3>
                 <p className="text-gray-500 text-sm mb-8 max-w-xl">
@@ -418,8 +589,8 @@ export default function NutritionPage() {
             <h2 className="text-3xl font-black text-white mb-4">Fuel right. Train right. Get seen.</h2>
             <p className="text-gray-500 text-sm mb-8">Submit your clips and join the Multisport Recur community today.</p>
             <Link
-              href="/submit"
-              className="inline-block bg-[#38bdf8] hover:bg-[#0ea5e9] text-white font-black text-sm px-9 py-4 rounded-full transition-all shadow-xl shadow-[#38bdf8]/25 hover:scale-105 uppercase tracking-wide"
+              href="/contact"
+              className="inline-block bg-[#38bdf8] hover:bg-[#0ea5e9] text-[#0a0f1e] font-black text-sm px-9 py-4 rounded-full transition-all shadow-xl shadow-[#38bdf8]/25 hover:scale-105 uppercase tracking-wide"
             >
               Submit Your Clips
             </Link>

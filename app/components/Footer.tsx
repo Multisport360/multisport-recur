@@ -5,7 +5,7 @@ const footerLinks = [
     heading: "Platform",
     links: [
       { label: "Home", href: "/" },
-      { label: "Get Your Page", href: "/#request-form" },
+      { label: "Get Your Page", href: "/get-your-page" },
       { label: "Athletes", href: "/athletes" },
       { label: "Training", href: "/training" },
     ],

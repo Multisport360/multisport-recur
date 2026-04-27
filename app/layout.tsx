@@ -8,7 +8,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Multisport Recur | Built for the Versatile. Built for the Grind.",
+  title: "Multisport Recur | Built for the Resilient. Built for the Grind.",
   description:
     "A community built for multi-sport athletes — get exposure, training resources, and connect with others who share your grind.",
 };

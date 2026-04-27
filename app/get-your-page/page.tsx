@@ -7,6 +7,50 @@ import Footer from "../components/Footer";
 
 /* ─── Data ─────────────────────────────────────────────── */
 
+const howItWorksSteps = [
+  {
+    number: "01",
+    title: "Fill Out The Form",
+    description: "Tell us about your athlete — sports, stats, positions, and achievements.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+      </svg>
+    ),
+  },
+  {
+    number: "02",
+    title: "We Build Your Page",
+    description: "Our team personally builds your premium profile page within 48 hours. No templates — built by hand.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0H3" />
+      </svg>
+    ),
+  },
+  {
+    number: "03",
+    title: "You Get Your Link",
+    description: "Receive your personal URL to share with coaches, recruiters, and scouts.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+      </svg>
+    ),
+  },
+  {
+    number: "04",
+    title: "Get Seen",
+    description: "Let your page do the talking while you focus on competing. Coaches get everything they need in one place.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      </svg>
+    ),
+  },
+];
+
 const pricingPlans = [
   {
     name: "Starter",
@@ -204,6 +248,38 @@ export default function GetYourPagePage() {
             >
               Get Your Page
             </a>
+          </div>
+        </section>
+
+        {/* ── HOW IT WORKS ─────────────────────────────── */}
+        <section className="py-28 px-4 bg-[#060b17]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-[#38bdf8] font-bold text-xs uppercase tracking-[0.25em] mb-4">The Process</p>
+              <h2 className="text-4xl sm:text-5xl font-black text-white leading-tight">
+                Simple. Fast. Professional.
+              </h2>
+            </div>
+
+            <div className="relative">
+              <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-[#38bdf8]/20 to-transparent" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+                {howItWorksSteps.map((step) => (
+                  <div key={step.number} className="flex flex-col items-center text-center">
+                    <div className="relative mb-7">
+                      <div className="w-20 h-20 rounded-full border-2 border-[#38bdf8]/30 bg-[#38bdf8]/8 flex items-center justify-center">
+                        <span className="text-[#38bdf8] font-black text-xl">{step.number}</span>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#38bdf8] flex items-center justify-center text-[#0a0f1e]">
+                        {step.icon}
+                      </div>
+                    </div>
+                    <h3 className="text-base font-black text-white mb-2">{step.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{step.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
