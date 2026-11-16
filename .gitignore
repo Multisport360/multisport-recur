@@ -3,3 +3,9 @@ node_modules
 .env*.local
 .DS_Store
 *.save
+next-env.d.ts
+*.tsbuildinfo
+test-results
+playwright-report
+screenshots
+.vercel

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+  Design tokens from CLAUDE.md. These are the ONLY colours, fonts and radii in the app.
+  Tailwind's default palette, radii and shadows are switched off so nothing else can sneak in.
+*/
+@theme {
+  --color-*: initial;
+  --color-track-blue: #1f4e9c; /* primary actions, links, ruler level bands (as tints) */
+  --color-lane-white: #f6f8fb; /* page background */
+  --color-chalk: #dce3ec; /* dividers, input borders, quiet surfaces */
+  --color-infield-navy: #14284a; /* all text and headings */
+  --color-hurdle-yellow: #f2c230; /* ONLY the athlete's own marker and own numbers */
+
+  --font-*: initial;
+  --font-display: var(--font-big-shoulders); /* headings and big stat numbers */
+  --font-sans: var(--font-atkinson); /* everything else */
+
+  /* Spacing runs on an 8px step: p-1 = 8px, p-2 = 16px, p-3 = 24px ... */
+  --spacing: 0.5rem;
+
+  /* 4px on inputs and buttons, 0 everywhere else. */
+  --radius-*: initial;
+  --radius-control: 4px;
+
+  /* No shadows. Focus is shown with an outline. */
+  --shadow-*: initial;
+  --drop-shadow-*: initial;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-lane-white);
+    color: var(--color-infield-navy);
+    font-family: var(--font-sans);
+    /* Every number lines up in columns. */
+    font-variant-numeric: tabular-nums;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: 0.005em;
+    text-wrap: balance;
+  }
+
+  a {
+    color: var(--color-track-blue);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 0.08em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 0.16em;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-track-blue);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-track-blue);
+    color: var(--color-lane-white);
+  }
+}
