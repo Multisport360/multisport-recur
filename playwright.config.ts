@@ -1,5 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Tests that create accounts need the Supabase keys from .env.local.
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // No .env.local: tests that need the database will say which key is missing.
+}
+
 const PORT = 3100;
 // Set E2E_BASE_URL to test a server that is already running (for example a Vercel preview).
 const EXTERNAL_URL = process.env.E2E_BASE_URL;
@@ -18,7 +25,12 @@ export default defineConfig({
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
-    { name: "phone", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } } },
+    {
+      name: "phone",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
+      // These send a real email each. Once is enough.
+      testIgnore: /sends-email\.spec\.ts/,
+    },
   ],
   webServer: EXTERNAL_URL
     ? undefined
