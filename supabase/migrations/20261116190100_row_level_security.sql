@@ -156,7 +156,10 @@ begin
     return existing_family;
   end if;
 
-  if exists (select 1 from public.athletes a where a.login_user_id = caller) then
+  -- Athlete logins are marked by the server in app_metadata (users cannot edit it).
+  -- The mark still applies if the athlete row was later removed.
+  if exists (select 1 from public.athletes a where a.login_user_id = caller)
+     or coalesce((select auth.jwt()) -> 'app_metadata' ->> 'role', '') = 'athlete' then
     raise exception 'athlete_login: an athlete login cannot create a family' using errcode = 'P0001';
   end if;
 

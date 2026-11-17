@@ -1,5 +1,5 @@
 import type { Comparison } from "./compare.ts";
-import { formatGap, formatValue, spokenValue } from "./format.ts";
+import { formatGap, formatRange, formatValue, spokenValue } from "./format.ts";
 import { isRoughGuide } from "./levels.ts";
 import { stepLabel } from "./sets.ts";
 
@@ -28,7 +28,7 @@ export function nextName(comparison: Comparison): string | null {
 
 function rangeText(comparison: Comparison, low: number, high: number | null): string {
   const { unit } = comparison.set;
-  return high === null ? formatValue(low, unit) : `${formatValue(low, unit)} to ${formatValue(high, unit)}`;
+  return high === null ? formatValue(low, unit) : formatRange(low, high, unit);
 }
 
 function thresholdHeadline(comparison: Comparison, subject: Subject): string {
@@ -44,11 +44,11 @@ function thresholdHeadline(comparison: Comparison, subject: Subject): string {
     return `${who} in ${reached} range. ${formatGap(comparison.gap, unit)} to ${next}.`;
   }
 
-  const base = `${who} in ${reached} range, the highest level this source lists.`;
-  const nextMark = comparison.topLevel?.nextMark;
-  if (!nextMark) return base;
-  const where = nextMark.tier === "mid" ? "middle" : "top";
-  return `${base} ${formatGap(nextMark.gap, unit)} to the ${where} of ${reached} range.`;
+  // At the top there is no gap to chase, so say where the level's own numbers run to.
+  const top = comparison.reachedLevel;
+  const base = `${who} in ${reached} range. ${top?.label} is the top level in this guide.`;
+  if (!top || top.elite === null) return base;
+  return `${base} This guide's ${top.label} numbers run from ${formatRange(top.entry, top.elite, unit)}.`;
 }
 
 function rangeHeadline(comparison: Comparison, subject: Subject): string {
@@ -99,9 +99,19 @@ export function screenReaderText(comparison: Comparison): string {
   } else if (comparison.standing === "in_level" && reached && next && comparison.gap !== null) {
     parts.push(`${reached} range`, `${spokenValue(comparison.gap, unit)} short of ${next}`);
   } else {
-    parts.push(`${reached} range`, "the highest level listed");
+    parts.push(`${reached} range`, "the top level in this guide");
   }
 
   if (isRoughGuide(comparison.confidence)) parts.push("rough guide");
   return parts.join(", ");
+}
+
+/**
+ * Keep a number and its unit on one line: "6 mph", "6' 2\"", "1 inch".
+ * Swaps the space between them for a non-breaking space. For display only.
+ */
+export function keepUnitsTogether(text: string): string {
+  return text
+    .replace(/(\d) (mph|sec|lb|in|inch|inches)\b/g, "$1\u00a0$2")
+    .replace(/(\d') (\d)/g, "$1\u00a0$2");
 }

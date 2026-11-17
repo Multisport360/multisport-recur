@@ -74,4 +74,103 @@
     background-color: var(--color-track-blue);
     color: var(--color-lane-white);
   }
+
+  summary {
+    cursor: pointer;
+  }
+}
+
+/*
+  GapRuler marker. --marker-x is the marker's place on the ruler, 0 (left) to 1 (right).
+  The chip under the marker shifts its own anchor by the same share, so it never hangs
+  off either end of the ruler.
+
+  The marker sliding to its value is the only motion on the site, and it is switched off
+  for anyone who asks for reduced motion.
+*/
+@layer components {
+  .ruler-marker,
+  .ruler-chip {
+    left: calc(var(--marker-x) * 100%);
+    transform: translateX(calc(var(--marker-x) * -100%));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ruler-marker,
+    .ruler-chip {
+      transition:
+        left 450ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .ruler-marker,
+    .ruler-chip {
+      animation: ruler-slide-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    }
+  }
+
+  /* Shared form controls: a score-card field with a solid base line. */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-chalk);
+    border-bottom: 2px solid var(--color-infield-navy);
+    border-radius: var(--radius-control);
+    background-color: var(--color-lane-white);
+    color: var(--color-infield-navy);
+    font: inherit;
+  }
+
+  .field[aria-invalid="true"] {
+    border-color: var(--color-infield-navy);
+    border-width: 2px;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.5rem 1.5rem;
+    border: 2px solid var(--color-track-blue);
+    border-radius: var(--radius-control);
+    background-color: var(--color-track-blue);
+    color: var(--color-lane-white);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .button:hover {
+    background-color: var(--color-infield-navy);
+    border-color: var(--color-infield-navy);
+  }
+
+  .button[disabled],
+  .button[aria-disabled="true"] {
+    background-color: var(--color-chalk);
+    border-color: var(--color-chalk);
+    color: var(--color-infield-navy);
+    cursor: not-allowed;
+  }
+
+  .button-quiet {
+    background-color: transparent;
+    color: var(--color-track-blue);
+  }
+
+  .button-quiet:hover {
+    background-color: transparent;
+    color: var(--color-infield-navy);
+  }
+}
+
+@keyframes ruler-slide-in {
+  from {
+    left: 0%;
+    transform: translateX(0%);
+  }
 }

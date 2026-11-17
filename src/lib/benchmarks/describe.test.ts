@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { compareToSet } from "./compare";
-import { headline, screenReaderText } from "./describe";
+import { headline, keepUnitsTogether, screenReaderText } from "./describe";
 import { buildSets, findSets } from "./sets";
 import {
   DASH_QUERY,
@@ -29,13 +29,16 @@ describe("headline", () => {
     expect(headline(result(VELOCITY_QUERY, 70))).toBe("You're 8 mph short of JUCO range.");
   });
 
-  test("at the top level: says it is the highest listed and gives the next mark inside it", () => {
+  test("at the top level: says it is the top level and where its numbers run to", () => {
     expect(headline(result(VELOCITY_QUERY, 93))).toBe(
-      "You're in D1 Power 4 range, the highest level this source lists. 2 mph to the middle of D1 Power 4 range.",
+      "You're in D1 Power 4 range. D1 Power 4 is the top level in this guide. This guide's D1 Power 4 numbers run from 92 to 98 mph.",
     );
-    expect(headline(result(VELOCITY_QUERY, 99))).toBe(
-      "You're in D1 Power 4 range, the highest level this source lists.",
-    );
+  });
+
+  test("at the top level with no upper number: just says it is the top level", () => {
+    const [set] = buildSets([row({ level: "Division 1", levelCode: "D1", entry: 84 })]);
+    if (!set) throw new Error("fixture set not found");
+    expect(headline(compareToSet(set, 90))).toBe("You're in D1 range. D1 is the top level in this guide.");
   });
 
   test("times use the same wording", () => {
@@ -51,10 +54,10 @@ describe("headline", () => {
   test("ranges say inside, under or above the typical range", () => {
     expect(headline(result(HEIGHT_QUERY, 75))).toBe("You're inside the typical FBS range (6' 2\" to 6' 6\").");
     expect(headline(result(HEIGHT_QUERY, 73))).toBe(
-      "You're inside the typical FCS range (6' 1\" to 6' 4\"). 1 in under the typical FBS range (6' 2\" to 6' 6\").",
+      "You're inside the typical FCS range (6' 1\" to 6' 4\"). 1 inch under the typical FBS range (6' 2\" to 6' 6\").",
     );
     expect(headline(result(HEIGHT_QUERY, 69))).toBe(
-      "You're 2 in under the typical D3/NAIA range (5' 11\" to 6' 3\").",
+      "You're 2 inches under the typical D3/NAIA range (5' 11\" to 6' 3\").",
     );
     expect(headline(result(HEIGHT_QUERY, 80))).toBe("You're above the typical range for every level listed.");
   });
@@ -70,7 +73,7 @@ describe("screenReaderText", () => {
   });
 
   test("at the top level", () => {
-    expect(screenReaderText(result(VELOCITY_QUERY, 96))).toBe("96 mph, D1 Power 4 range, the highest level listed");
+    expect(screenReaderText(result(VELOCITY_QUERY, 96))).toBe("96 mph, D1 Power 4 range, the top level in this guide");
   });
 
   test("times are spoken in seconds", () => {
@@ -93,5 +96,16 @@ describe("screenReaderText", () => {
     ]);
     if (!set) throw new Error("fixture set not found");
     expect(screenReaderText(compareToSet(set, 80))).toBe("80 mph, JUCO range, 2 mph short of D2, rough guide");
+  });
+});
+
+describe("keepUnitsTogether", () => {
+  test("joins numbers to their units with a non-breaking space", () => {
+    expect(keepUnitsTogether("You're in D2 range. 6 mph to D1.")).toBe("You're in D2 range. 6\u00a0mph to D1.");
+    expect(keepUnitsTogether("(6' 1\" to 6' 4\"). 1 inch under")).toBe("(6'\u00a01\" to 6'\u00a04\"). 1\u00a0inch under");
+  });
+
+  test("leaves other spaces alone", () => {
+    expect(keepUnitsTogether("84 consistently in games")).toBe("84 consistently in games");
   });
 });

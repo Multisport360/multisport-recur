@@ -1,4 +1,4 @@
-import { sourceIds, type BenchmarkSet } from "./sets.ts";
+import { sourceIds, type BenchmarkSet, type LevelMark } from "./sets.ts";
 
 /**
  * Finds benchmark rows that look wrong so a person can check them against the source.
@@ -37,4 +37,25 @@ export function findSingleLevelSets(sets: readonly BenchmarkSet[]): string[] {
   return sets
     .filter((set) => set.levels.length === 1)
     .map((set) => `${set.sport} / ${set.positionOrEvent} / ${set.metric} [${sourceIds(set)}]: only ${set.levels[0]?.label}`);
+}
+
+/** A higher level whose entry number is easier than a lower level's. */
+export type OrderSurprise = { higher: LevelMark; lower: LevelMark };
+
+/**
+ * Places where a guide's numbers run against the usual order of levels, for example a
+ * D3/NAIA 60-yard dash number that is faster than the D2 one. The ruler follows the
+ * guide's numbers, so the page says so in words rather than leave it looking like a mistake.
+ */
+export function orderSurprises(set: BenchmarkSet): OrderSurprise[] {
+  if (set.better === "range") return [];
+  const isEasier = (a: number, b: number) => (set.better === "higher" ? a < b : a > b);
+  const surprises: OrderSurprise[] = [];
+  // set.levels is highest level first.
+  set.levels.forEach((higher, index) => {
+    for (const lower of set.levels.slice(index + 1)) {
+      if (isEasier(higher.entry, lower.entry)) surprises.push({ higher, lower });
+    }
+  });
+  return surprises;
 }

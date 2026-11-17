@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatGap, formatValue, parseValueInput, spokenValue } from "./format";
+import { formatGap, formatRange, formatValue, inputGuide, parseValueInput, spokenValue } from "./format";
 
 describe("formatValue", () => {
   test("speeds and weights drop needless decimals", () => {
@@ -35,12 +35,40 @@ describe("formatGap", () => {
     expect(formatGap(6, "mph")).toBe("6 mph");
     expect(formatGap(0.15, "sec")).toBe("0.15 sec");
     expect(formatGap(12, "sec")).toBe("12 sec");
-    expect(formatGap(3, "in")).toBe("3 in");
+    expect(formatGap(3, "in")).toBe("3 inches");
+    expect(formatGap(1, "in")).toBe("1 inch");
     expect(formatGap(10, "lb")).toBe("10 lb");
   });
 
   test("long length gaps read as feet and inches", () => {
     expect(formatGap(114, "in")).toBe("9' 6\"");
+  });
+});
+
+describe("formatRange", () => {
+  test("says the unit once when both ends share it", () => {
+    expect(formatRange(290, 325, "lb")).toBe("290 to 325 lb");
+    expect(formatRange(4.6, 4.9, "sec")).toBe("4.6 to 4.9 sec");
+  });
+
+  test("keeps feet and inches on both ends", () => {
+    expect(formatRange(74, 78, "in")).toBe("6' 2\" to 6' 6\"");
+  });
+});
+
+describe("inputGuide", () => {
+  test("short times are typed in seconds and long ones as minutes and seconds", () => {
+    expect(inputGuide("sec", 11.4).unitLabel).toBe("seconds");
+    expect(inputGuide("sec", 269)).toEqual({
+      unitLabel: "minutes:seconds",
+      hint: "Type the time as minutes and seconds, like 4:40.",
+    });
+  });
+
+  test("a vertical jump is typed in inches and a height or throw in feet and inches", () => {
+    expect(inputGuide("in", 30)).toEqual({ unitLabel: "inches", hint: "Type inches, like 30." });
+    expect(inputGuide("in", 74).unitLabel).toBe("feet and inches");
+    expect(inputGuide("in", 1873).unitLabel).toBe("feet and inches");
   });
 });
 
@@ -99,10 +127,11 @@ describe("parseValueInput", () => {
   });
 
   test("a number far too big is an error", () => {
-    const parsed = parseValueInput("840", "mph");
-    expect(parsed).toEqual({
-      ok: false,
-      message: "840 mph is higher than this field accepts. Check the number and type it again.",
-    });
+    for (const raw of ["840", "120"]) {
+      expect(parseValueInput(raw, "mph")).toEqual({
+        ok: false,
+        message: `${raw} mph is higher than this field accepts. Check the number and type it again.`,
+      });
+    }
   });
 });

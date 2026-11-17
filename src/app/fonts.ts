@@ -9,6 +9,8 @@ export const bigShoulders = Big_Shoulders({
   subsets: ["latin"],
   axes: ["opsz"],
   display: "swap",
+  // Only used for the moment before the web font arrives.
+  fallback: ["sans-serif"],
   // Next has no fallback metrics for this family, so skip the generated fallback face.
   adjustFontFallback: false,
   variable: "--font-big-shoulders",
@@ -17,6 +19,7 @@ export const bigShoulders = Big_Shoulders({
 export const atkinson = Atkinson_Hyperlegible_Next({
   subsets: ["latin"],
   display: "swap",
+  fallback: ["sans-serif"],
   adjustFontFallback: false,
   variable: "--font-atkinson",
 });

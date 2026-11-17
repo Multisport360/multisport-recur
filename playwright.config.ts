@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
-const BASE_URL = `http://localhost:${PORT}`;
+// Set E2E_BASE_URL to test a server that is already running (for example a Vercel preview).
+const EXTERNAL_URL = process.env.E2E_BASE_URL;
+const BASE_URL = EXTERNAL_URL ?? `http://localhost:${PORT}`;
 
 // End-to-end tests run against a production build so they see what a visitor sees.
 export default defineConfig({
@@ -18,10 +20,12 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
     { name: "phone", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } } },
   ],
-  webServer: {
-    command: `npm run build && npm run start -- -p ${PORT}`,
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  webServer: EXTERNAL_URL
+    ? undefined
+    : {
+        command: `npm run build && npm run start -- -p ${PORT}`,
+        url: BASE_URL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
+      },
 });
