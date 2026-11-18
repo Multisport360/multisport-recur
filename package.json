@@ -23,6 +23,7 @@
     "screenshots": "node --env-file=.env.local scripts/screenshots.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "next": "^16.4.6",
@@ -30,6 +31,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "resend": "^6.38.1",
+    "stripe": "^23.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

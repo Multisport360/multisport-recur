@@ -1,4 +1,5 @@
 import { SITE } from "@/config/site";
+import { siteUrl } from "@/lib/env";
 import type { Email } from "./send";
 
 /**
@@ -22,6 +23,49 @@ export function athleteInviteEmail(input: { athleteFirstName: string; link: stri
       `Open this link to choose a password:\n${input.link}`,
       "The link works once. If it has expired, ask your parent to invite you again.",
       "If you weren't expecting this, you can ignore this email.",
+    ]),
+  };
+}
+
+function accountLink(): string {
+  return `${siteUrl()}/account`;
+}
+
+/** Sent once when a training plan subscription starts. */
+export function subscriptionStartedEmail(input: { price: string; renewsOn: string }): Content {
+  return {
+    subject: `Your ${SITE.name} training plan subscription has started`,
+    text: sign([
+      "Thanks for subscribing to the training plan.",
+      `You pay ${input.price}. It renews automatically, and the next charge is on ${input.renewsOn}.`,
+      "Coach-reviewed plans are still being written. Your plan page will show your athlete's plan as soon as one is ready for their sport and position.",
+      `To cancel, open your Account page and choose "Cancel my training plan". It takes two clicks:\n${accountLink()}`,
+    ]),
+  };
+}
+
+/** Sent a few days before each renewal. */
+export function renewalReminderEmail(input: { amount: string; renewsOn: string }): Content {
+  return {
+    subject: `Your ${SITE.name} training plan renews on ${input.renewsOn}`,
+    text: sign([
+      `Your training plan renews on ${input.renewsOn}, and you'll be charged ${input.amount}.`,
+      "Nothing to do if you want to keep it.",
+      `To stop it renewing, cancel from your Account page before then. It takes two clicks:\n${accountLink()}`,
+    ]),
+  };
+}
+
+/** Sent once when a subscription is cancelled. */
+export function subscriptionCanceledEmail(input: { accessUntil: string | null }): Content {
+  return {
+    subject: `Your ${SITE.name} training plan is cancelled`,
+    text: sign([
+      "Your training plan subscription is cancelled. You won't be charged again.",
+      input.accessUntil
+        ? `You can still use the plan until ${input.accessUntil}.`
+        : "Your access to the plan has ended.",
+      `Your athletes' gap reports stay free, and you can subscribe again any time from your Account page:\n${accountLink()}`,
     ]),
   };
 }

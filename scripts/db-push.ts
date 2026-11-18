@@ -18,7 +18,7 @@ if (!dbUrl) {
   process.exit(1);
 }
 
-const result = spawnSync("npx", ["--yes", "supabase@latest", "db", "push", "--db-url", dbUrl, ...process.argv.slice(2)], {
+const result = spawnSync("npx", ["--yes", "supabase@latest", "db", "push", `--remote=${dbUrl}`, ...process.argv.slice(2)], {
   stdio: "inherit",
 });
 process.exit(result.status ?? 1);
