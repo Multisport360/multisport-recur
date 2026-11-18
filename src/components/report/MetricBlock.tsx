@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GapRuler } from "@/components/gap-ruler/GapRuler";
 import type { Subject } from "@/lib/benchmarks/describe";
+import { metricInSentence } from "@/lib/benchmarks/format";
 import type { MetricReport } from "@/lib/report/build";
 import { formatDay, measuredBy } from "@/lib/report/words";
 import { ProgressTable } from "./ProgressTable";
@@ -23,11 +24,11 @@ export function MetricBlock({ metric, subject, firstName, enterHref }: Props) {
       {metric.value === null ? (
         <>
           <p data-testid="metric-empty" className="mt-1 max-w-80">
-            Not entered yet. Enter {firstName}&apos;s {metric.metric.toLowerCase()} to see which level it reaches.
+            Not entered yet. Enter {firstName}&apos;s {metricInSentence(metric.metric)} to see which level it reaches.
           </p>
           <p className="mt-2">
             <Link href={enterHref} className="button button-quiet w-full sm:w-auto">
-              Enter {metric.metric.toLowerCase()}
+              Enter {metricInSentence(metric.metric)}
             </Link>
           </p>
         </>
@@ -51,7 +52,7 @@ export function MetricBlock({ metric, subject, firstName, enterHref }: Props) {
           {metric.history.length > 1 ? <ProgressTable metric={metric} /> : null}
           <p className="mt-3">
             <Link href={enterHref} className="inline-block py-1">
-              Add a new {metric.metric.toLowerCase()} number
+              Add a new {metricInSentence(metric.metric)} number
             </Link>
           </p>
         </>

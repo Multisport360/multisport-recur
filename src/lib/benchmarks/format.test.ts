@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatGap, formatRange, formatValue, inputGuide, parseValueInput, spokenValue, tickCaption } from "./format";
+import { formatGap, formatRange, formatValue, inputGuide, metricInSentence, parseValueInput, spokenValue, tickCaption } from "./format";
 
 describe("formatValue", () => {
   test("speeds and weights drop needless decimals", () => {
@@ -143,5 +143,13 @@ describe("parseValueInput", () => {
         message: `${raw} mph is higher than this field accepts. Check the number and type it again.`,
       });
     }
+  });
+});
+
+describe("metricInSentence", () => {
+  test("lowercases only the first letter", () => {
+    expect(metricInSentence("Bench press (1RM)")).toBe("bench press (1RM)");
+    expect(metricInSentence("Fastball velocity")).toBe("fastball velocity");
+    expect(metricInSentence("40-yard dash")).toBe("40-yard dash");
   });
 });

@@ -1,7 +1,7 @@
 import { orderSurprises } from "@/lib/benchmarks/anomalies";
 import type { Comparison } from "@/lib/benchmarks/compare";
 import { headline, keepUnitsTogether, screenReaderText, type Subject } from "@/lib/benchmarks/describe";
-import { formatValue } from "@/lib/benchmarks/format";
+import { formatValue, metricInSentence } from "@/lib/benchmarks/format";
 import { isRoughGuide } from "@/lib/benchmarks/levels";
 import { buildRuler } from "@/lib/benchmarks/ruler";
 import type { BenchmarkSet } from "@/lib/benchmarks/sets";
@@ -47,7 +47,7 @@ function guideNotes(set: BenchmarkSet, comparison: Comparison | null): string[] 
   const notes: string[] = [];
   const [onlyLevel] = set.levels;
   if (set.levels.length === 1 && onlyLevel) {
-    notes.push(`This guide only gives a ${set.metric.toLowerCase()} number for ${onlyLevel.label}, so there is one level on this ruler.`);
+    notes.push(`This guide only gives a ${metricInSentence(set.metric)} number for ${onlyLevel.label}, so there is one level on this ruler.`);
   }
   for (const { higher, lower } of orderSurprises(set)) {
     if (!matters([higher.levelCode, lower.levelCode])) continue;

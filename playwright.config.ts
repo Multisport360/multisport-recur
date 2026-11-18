@@ -31,7 +31,7 @@ export default defineConfig({
       // These sign real test users in and out through Supabase Auth, which limits sign-ins
       // per IP. The server logic is the same at every width, so they run once, on desktop.
       // Phone layout of the signed-in pages is checked by the screenshot and axe review.
-      testIgnore: /(auth|billing|family|report|sends-email)\.spec\.ts/,
+      testIgnore: /(a11y-signed-in|auth|billing|family|report|sends-email)\.spec\.ts/,
     },
   ],
   webServer: EXTERNAL_URL

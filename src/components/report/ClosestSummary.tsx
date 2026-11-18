@@ -1,4 +1,5 @@
 import { headline, keepUnitsTogether, type Subject } from "@/lib/benchmarks/describe";
+import { metricInSentence } from "@/lib/benchmarks/format";
 import type { Standout } from "@/lib/report/build";
 
 type Props = { leader: Standout; others: Standout[]; firstName: string; subject: Subject };
@@ -15,15 +16,15 @@ export function ClosestSummary({ leader, others, firstName, subject }: Props) {
       <h2 className="text-[1.75rem]">Closest to college right now</h2>
       <p className="mt-1 text-[1.25rem] leading-[1.35] font-bold">
         {level
-          ? `${where(leader)}: ${leader.metric.toLowerCase()} reaches ${level} range.`
-          : `${where(leader)}: ${leader.metric.toLowerCase()} is the closest to a first level.`}
+          ? `${where(leader)}: ${metricInSentence(leader.metric)} reaches ${level} range.`
+          : `${where(leader)}: ${metricInSentence(leader.metric)} is the closest to a first level.`}
       </p>
       <p className="mt-1">{keepUnitsTogether(headline(leader.comparison, subject))}</p>
       {others.length > 0 ? (
         <ul className="mt-2 space-y-0.5">
           {others.map((other) => (
             <li key={`${other.sport}-${other.positionOrEvent}`}>
-              {where(other)}: {other.metric.toLowerCase()}{" "}
+              {where(other)}: {metricInSentence(other.metric)}{" "}
               {other.comparison.reachedLevel ? `in ${other.comparison.reachedLevel.label} range` : "below the first level"}.
             </li>
           ))}

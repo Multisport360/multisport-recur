@@ -58,7 +58,11 @@ const PUBLIC_SHOTS: Shot[] = [
 
 async function capture(page: Page, shot: Shot, size: string) {
   await page.goto(BASE + shot.path, { waitUntil: "load" });
-  if (shot.prepare) await shot.prepare(page);
+  if (shot.prepare) {
+    // Let the page finish starting up in the browser before choosing options.
+    await page.waitForTimeout(SETTLE_MS);
+    await shot.prepare(page);
+  }
   await page.waitForTimeout(SETTLE_MS);
   const file = path.join(OUT, `${shot.name}-${size}.png`);
   await page.screenshot({ path: file, fullPage: true });
@@ -82,6 +86,35 @@ async function main() {
   const younger = await addAthleteAsAdmin(admin, full, "Jamie", new Date().getFullYear() - 12);
   // An unused consent, so the add-athlete form shows instead of the consent page.
   await admin.from("consents").insert({ family_id: full.familyId, guardian_id: full.guardianId, consent_version: "2026-11-draft-1", method: "checkbox_attestation" });
+  // A two-sport report with history, and a subscription so the plan pages show their paid state.
+  const sports = await admin
+    .from("athlete_sports")
+    .insert([
+      { athlete_id: older.athleteId, sport: "Baseball", position_or_event: "Pitcher" },
+      { athlete_id: older.athleteId, sport: "Football", position_or_event: "QB" },
+    ])
+    .select("id, sport");
+  const baseballSportId = sports.data?.find((row) => row.sport === "Baseball")?.id ?? "";
+  const stat = (metric: string, value: number, unit: string, measured_on: string, sport = "Baseball") => ({
+    athlete_id: older.athleteId, sport, metric, value, unit, measured_on, how_measured: "coach",
+  });
+  await admin.from("stat_entries").insert([
+    stat("Fastball velocity", 78, "mph", "2026-03-14"),
+    stat("Fastball velocity", 81, "mph", "2026-06-20"),
+    stat("Fastball velocity", 83, "mph", "2026-10-02"),
+    stat("60-yard dash", 7.05, "sec", "2026-10-02"),
+    stat("40-yard dash", 4.85, "sec", "2026-09-12", "Football"),
+    stat("Height", 73, "in", "2026-09-12", "Football"),
+  ]);
+  await admin.from("subscriptions").insert({
+    family_id: full.familyId,
+    stripe_customer_id: `cus_shots_${full.familyId}`,
+    stripe_subscription_id: `sub_shots_${full.familyId}`,
+    status: "active",
+    price_cents: 1200,
+    billing_interval: "month",
+    current_period_end: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+  });
 
   const browser = await chromium.launch();
   try {
@@ -96,6 +129,8 @@ async function main() {
         { name: "athletes-empty", path: "/athletes" },
         { name: "consent", path: "/consent" },
         { name: "account", path: "/account" },
+        { name: "plan-not-subscribed", path: "/plan" },
+        { name: "plan-subscribe", path: "/plan/subscribe" },
       ]) await capture(newParent, shot, size);
       await newParent.close();
 
@@ -107,6 +142,10 @@ async function main() {
         { name: "athlete-15", path: `/athletes/${older.athleteId}` },
         { name: "athlete-12", path: `/athletes/${younger.athleteId}` },
         { name: "athlete-invite", path: `/athletes/${older.athleteId}/invite` },
+        { name: "sport-new", path: `/athletes/${older.athleteId}/sports/new` },
+        { name: "stat-new", path: `/athletes/${older.athleteId}/stats/new?sport=${baseballSportId}&metric=Fastball%20velocity` },
+        { name: "plan-subscribed", path: "/plan" },
+        { name: "account-subscribed", path: "/account" },
       ]) await capture(parent, shot, size);
       await parent.close();
     }

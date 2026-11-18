@@ -202,3 +202,11 @@ export function parseValueInput(raw: string, unit: Unit, typical?: number): Pars
   return { ok: true, value };
 }
 
+
+/**
+ * A metric name for the middle of a sentence: "Bench press (1RM)" -> "bench press (1RM)".
+ * Only the first letter changes, so abbreviations keep their capitals.
+ */
+export function metricInSentence(metric: string): string {
+  return metric.charAt(0).toLowerCase() + metric.slice(1);
+}

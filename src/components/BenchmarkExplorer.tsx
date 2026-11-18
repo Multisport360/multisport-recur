@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { GapRuler } from "@/components/gap-ruler/GapRuler";
 import { compare } from "@/lib/benchmarks/compare";
 import { screenReaderText } from "@/lib/benchmarks/describe";
-import { inputGuide, parseValueInput } from "@/lib/benchmarks/format";
+import { inputGuide, metricInSentence, parseValueInput } from "@/lib/benchmarks/format";
 import { isSameSelection, optionsFor, resolveSelection, type Selection } from "@/lib/benchmarks/selection";
 import { findSets, type BenchmarkSet } from "@/lib/benchmarks/sets";
 import type { Gender, Sport } from "@/lib/benchmarks/types";
@@ -186,7 +186,7 @@ export function BenchmarkExplorer({ sets }: { sets: BenchmarkSet[] }) {
               <>
                 <h2 className="text-[1.75rem]">The same number on a second guide</h2>
                 <p className="mt-1 mb-2 max-w-80">
-                  Recruiting guides don&apos;t agree on every number, so {selection.metric.toLowerCase()} gets a ruler for
+                  Recruiting guides don&apos;t agree on every number, so {metricInSentence(selection.metric)} gets a ruler for
                   each guide.
                 </p>
               </>
