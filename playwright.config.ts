@@ -28,8 +28,10 @@ export default defineConfig({
     {
       name: "phone",
       use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
-      // These send a real email each. Once is enough.
-      testIgnore: /sends-email\.spec\.ts/,
+      // These sign real test users in and out through Supabase Auth, which limits sign-ins
+      // per IP. The server logic is the same at every width, so they run once, on desktop.
+      // Phone layout of the signed-in pages is checked by the screenshot and axe review.
+      testIgnore: /(auth|family|sends-email)\.spec\.ts/,
     },
   ],
   webServer: EXTERNAL_URL

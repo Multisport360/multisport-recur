@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
-import { addAthlete, type TestFamily } from "../tests/db/helpers";
-import { emailLinkFor, expect, signIn, test, THIS_YEAR } from "./support/accounts";
+import { addAthleteAsAdmin } from "../tests/db/helpers";
+import { emailLinkFor, expect, signIn, test, THIS_YEAR, type E2eFamily } from "./support/accounts";
 
 /**
  * Tests that send a real email. Each sends ONE message to a Resend test inbox
@@ -30,20 +30,20 @@ test("creating an account sends a confirmation email", async ({ page, admin }) =
 });
 
 /** Invite an athlete through the page. Sends one real email to a Resend test inbox. Needs RESEND_API_KEY. */
-async function inviteThroughPage(page: Page, parent: TestFamily, athleteId: string, name: string): Promise<string> {
+async function inviteThroughPage(page: Page, parent: E2eFamily, athleteId: string, name: string): Promise<string> {
   const email = `delivered+invite-${randomUUID().slice(0, 8)}@resend.dev`;
   await signIn(page, parent.user);
   await page.goto(`/athletes/${athleteId}/invite`);
   await page.getByLabel(`${name}'s email`).fill(email);
   await page.getByRole("button", { name: "Send the invite" }).click();
-  await expect(page.getByRole("status")).toHaveText(`The invite is on its way to ${name}'s email.`);
+  await expect(page.getByRole("main").getByRole("status")).toHaveText(`The invite is on its way to ${name}'s email.`);
   return email;
 }
 
 test("an invited athlete gets a login tied to that one athlete and sees nothing else", async ({ page, admin, newParent }) => {
   const parent = await newParent("invite");
-  const invited = await addAthlete(parent, "Morgan", THIS_YEAR - 15);
-  const sibling = await addAthlete(parent, "Casey", THIS_YEAR - 16);
+  const invited = await addAthleteAsAdmin(admin, parent, "Morgan", THIS_YEAR - 15);
+  const sibling = await addAthleteAsAdmin(admin, parent, "Casey", THIS_YEAR - 16);
 
   const email = await inviteThroughPage(page, parent, invited.athleteId, "Morgan");
 

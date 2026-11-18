@@ -1,5 +1,7 @@
 import { test as base, expect, type Page } from "@playwright/test";
-import { adminClient, cleanUp, createFamily, type Client, type TestFamily } from "../../tests/db/helpers";
+import { adminClient, cleanUp, createFamilyWithoutSignIn, type Client } from "../../tests/db/helpers";
+
+export type E2eFamily = Awaited<ReturnType<typeof createFamilyWithoutSignIn>>;
 
 /**
  * Test accounts for end-to-end tests. They are real users in the Supabase project
@@ -10,7 +12,7 @@ import { adminClient, cleanUp, createFamily, type Client, type TestFamily } from
 type Fixtures = {
   admin: Client;
   /** Makes a parent account with an empty family. Call it more than once for more families. */
-  newParent: (label: string) => Promise<TestFamily>;
+  newParent: (label: string) => Promise<E2eFamily>;
 };
 
 export const test = base.extend<Fixtures>({
@@ -21,7 +23,7 @@ export const test = base.extend<Fixtures>({
   newParent: async ({ admin }, provide) => {
     const familyIds: string[] = [];
     await provide(async (label) => {
-      const family = await createFamily(admin, `e2e-${label}`);
+      const family = await createFamilyWithoutSignIn(admin, `e2e-${label}`);
       familyIds.push(family.familyId);
       return family;
     });

@@ -85,7 +85,14 @@ beforeAll(async () => {
         reviewed_at: new Date().toISOString(),
         is_published: true,
       },
-      { sport: "Baseball", title: "RLS test template (draft)", safety_notes: "Test only." },
+      {
+        sport: "Baseball",
+        title: "RLS test template (draft)",
+        safety_notes: "Test only.",
+        reviewed_by: null,
+        reviewed_at: null,
+        is_published: false,
+      },
     ])
     .select("id, is_published");
   if (templates.error) throw new Error(`could not add plan templates: ${templates.error.message}`);

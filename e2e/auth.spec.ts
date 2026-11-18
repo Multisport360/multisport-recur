@@ -48,7 +48,7 @@ test("a wrong password says so without saying whether the account exists", async
   await page.getByLabel("Password").fill("not-the-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("That email and password don't match. Check both and try again.");
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText("That email and password don't match. Check both and try again.");
   await expect(page).toHaveURL(/\/login/);
 });
 
@@ -63,7 +63,7 @@ test("an email link signs the parent in, and a used or broken link explains itse
   await page.context().clearCookies();
   await page.goto(link);
   await expect(page).toHaveURL(/\/login\?problem=link$/);
-  await expect(page.getByRole("alert")).toHaveText(
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
     "That link has expired or was already used. Sign in below, or ask for a new link.",
   );
 });

@@ -73,6 +73,47 @@ export async function createFamily(admin: Client, label: string): Promise<TestFa
   return { user, familyId: family.data, guardianId: guardian.data.id };
 }
 
+/**
+ * Creates a confirmed parent login and their family with the service role, without signing in.
+ * Used by end-to-end tests, where the browser does the signing in. This keeps the number of
+ * sign-ins under Supabase Auth's per-IP rate limit.
+ */
+export async function createFamilyWithoutSignIn(admin: Client, label: string): Promise<{ user: { id: string; email: string; password: string }; familyId: string; guardianId: string }> {
+  const email = `rls-${label}-${randomUUID()}@example.com`;
+  const password = `pw-${randomUUID()}`;
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  if (created.error || !created.data.user) throw new Error(`could not create test user ${label}: ${created.error?.message}`);
+  createdUserIds.push(created.data.user.id);
+  const userId = created.data.user.id;
+
+  const family = await admin.from("families").insert({}).select("id").single();
+  if (family.error) throw new Error(`could not create family for ${label}: ${family.error.message}`);
+  const guardian = await admin.from("guardians").insert({ family_id: family.data.id, user_id: userId }).select("id").single();
+  if (guardian.error) throw new Error(`could not create guardian for ${label}: ${guardian.error.message}`);
+
+  return { user: { id: userId, email, password }, familyId: family.data.id, guardianId: guardian.data.id };
+}
+
+/** Records consent and adds an athlete with the service role. For end-to-end set-up only. */
+export async function addAthleteAsAdmin(
+  admin: Client,
+  family: { familyId: string; guardianId: string },
+  firstName: string,
+  birthYear: number,
+): Promise<{ athleteId: string }> {
+  const consent = await admin
+    .from("consents")
+    .insert({ family_id: family.familyId, guardian_id: family.guardianId, ...TEST_CONSENT });
+  if (consent.error) throw new Error(`could not record consent: ${consent.error.message}`);
+  const athlete = await admin
+    .from("athletes")
+    .insert({ family_id: family.familyId, first_name: firstName, grad_year: 2028, birth_year: birthYear, gender: "Male" })
+    .select("id")
+    .single();
+  if (athlete.error) throw new Error(`could not add athlete ${firstName}: ${athlete.error.message}`);
+  return { athleteId: athlete.data.id };
+}
+
 export const TEST_CONSENT = { consent_version: "test-v1", method: "test" } as const;
 
 export async function recordConsent(family: TestFamily): Promise<void> {

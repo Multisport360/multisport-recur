@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { addAthlete } from "../tests/db/helpers";
+import { addAthleteAsAdmin } from "../tests/db/helpers";
 import { expect, signIn, test, THIS_YEAR } from "./support/accounts";
 
 /**
@@ -38,7 +38,7 @@ test("consent comes first: no athlete form, and no athlete row, until a consent 
 
   // Agreeing needs both boxes.
   await page.getByRole("button", { name: "Agree and add my athlete" }).click();
-  await expect(page.getByRole("alert")).toHaveText(
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
     "Tick the first box to confirm you are this athlete's parent or legal guardian.",
   );
   expect((await admin.from("consents").select("id").eq("family_id", parent.familyId)).data).toEqual([]);
@@ -97,10 +97,10 @@ test("a parent adds an athlete, and the consent record is tied to that athlete",
   await expect(page).toHaveURL(/\/consent$/);
 });
 
-test("an athlete under 13 has no login option, and one who is 13 or older can be invited", async ({ page, newParent }) => {
+test("an athlete under 13 has no login option, and one who is 13 or older can be invited", async ({ page, admin, newParent }) => {
   const parent = await newParent("login-rule");
-  const young = await addAthlete(parent, "Jamie", THIS_YEAR - 12);
-  const older = await addAthlete(parent, "Morgan", THIS_YEAR - 15);
+  const young = await addAthleteAsAdmin(admin, parent, "Jamie", THIS_YEAR - 12);
+  const older = await addAthleteAsAdmin(admin, parent, "Morgan", THIS_YEAR - 15);
   await signIn(page, parent.user);
 
   await page.goto(`/athletes/${young.athleteId}`);
@@ -116,13 +116,13 @@ test("an athlete under 13 has no login option, and one who is 13 or older can be
   // The parent's own email is refused before anything is created.
   await page.getByLabel("Morgan's email").fill(parent.user.email);
   await page.getByRole("button", { name: "Send the invite" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Use Morgan's own email address, not yours.");
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText("Use Morgan's own email address, not yours.");
 });
 
-test("one family cannot open another family's athlete", async ({ page, newParent }) => {
+test("one family cannot open another family's athlete", async ({ page, admin, newParent }) => {
   const familyA = await newParent("family-a");
   const familyB = await newParent("family-b");
-  const athleteOfA = await addAthlete(familyA, "Alex", THIS_YEAR - 15);
+  const athleteOfA = await addAthleteAsAdmin(admin, familyA, "Alex", THIS_YEAR - 15);
 
   await signIn(page, familyB.user);
   for (const path of [`/athletes/${athleteOfA.athleteId}`, `/athletes/${athleteOfA.athleteId}/invite`]) {
@@ -134,7 +134,7 @@ test("one family cannot open another family's athlete", async ({ page, newParent
 
 test("a parent can remove an athlete and everything saved about them", async ({ page, admin, newParent }) => {
   const parent = await newParent("remove");
-  const athlete = await addAthlete(parent, "Taylor", THIS_YEAR - 15);
+  const athlete = await addAthleteAsAdmin(admin, parent, "Taylor", THIS_YEAR - 15);
   await signIn(page, parent.user);
 
   await page.goto(`/athletes/${athlete.athleteId}`);
@@ -142,7 +142,7 @@ test("a parent can remove an athlete and everything saved about them", async ({ 
   await page.getByRole("button", { name: "Yes, remove Taylor for good" }).click();
 
   await expect(page).toHaveURL(/\/athletes\?removed=1$/);
-  await expect(page.getByRole("status")).toHaveText("The athlete and all of their numbers were removed.");
+  await expect(page.getByRole("main").getByRole("status")).toHaveText("The athlete and all of their numbers were removed.");
   for (const table of ["athletes", "consents"] as const) {
     expect((await admin.from(table).select("id").eq("family_id", parent.familyId)).data).toEqual([]);
   }
