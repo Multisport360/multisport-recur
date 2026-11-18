@@ -58,7 +58,7 @@ test("an invited athlete gets a login tied to that one athlete and sees nothing 
   await page.context().clearCookies();
   await page.goto(await emailLinkFor(admin, email));
   await expect(page).toHaveURL(new RegExp(`/athletes/${invited.athleteId}$`));
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Morgan");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("My gap report");
   await expect(page.getByRole("link", { name: "My report" })).toBeVisible();
   await expect(page.getByTestId("athlete-login")).toHaveCount(0);
 

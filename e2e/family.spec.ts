@@ -71,7 +71,7 @@ test("a parent adds an athlete, and the consent record is tied to that athlete",
   await page.getByLabel("Weight in pounds (optional)").fill("160");
   await fillAthlete(page, "Riley", AGE_15_BIRTH_YEAR);
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Riley");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Riley's gap report");
 
   const athletes = await admin.from("athletes").select("*").eq("family_id", parent.familyId);
   expect(athletes.data).toHaveLength(1);
