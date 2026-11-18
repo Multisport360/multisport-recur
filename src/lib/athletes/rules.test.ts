@@ -94,6 +94,13 @@ describe("athleteFormSchema", () => {
     expect(errorsFor({ ...VALID, weightLb: "20" }).weightLb).toContain("like 150");
   });
 
+  test("a birth year that doesn't fit the grade is refused, with the years that would", () => {
+    expect(errorsFor({ ...VALID, gradYear: "2028", birthYear: "2014" })).toEqual({
+      birthYear: "A student in the class of 2028 is usually born between 2009 and 2011. Check the birth year and the grade.",
+    });
+    expect(errorsFor({ ...VALID, gradYear: "2029", birthYear: "2010" })).toEqual({});
+  });
+
   test("gender must be one the benchmarks cover", () => {
     expect(errorsFor({ ...VALID, gender: "" })).toEqual({ gender: "Choose who your athlete competes with." });
   });

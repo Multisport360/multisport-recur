@@ -25,13 +25,13 @@ export function ClosestSummary({ leader, others, firstName, subject }: Props) {
           {others.map((other) => (
             <li key={`${other.sport}-${other.positionOrEvent}`}>
               {where(other)}: {metricInSentence(other.metric)}{" "}
-              {other.comparison.reachedLevel ? `in ${other.comparison.reachedLevel.label} range` : "below the first level"}.
+              {other.comparison.reachedLevel ? `is in ${other.comparison.reachedLevel.label} range` : "is below the first level"}.
             </li>
           ))}
         </ul>
       ) : null}
       <p className="mt-2 text-[0.9375rem]">
-        Based on {firstName}&apos;s best number in each sport. Height and weight are left out.
+        This uses {firstName}&apos;s best number in each sport and leaves out height and weight.
       </p>
     </section>
   );

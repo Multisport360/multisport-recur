@@ -24,7 +24,7 @@ export default async function NewAthletePage() {
   return (
     <div className="max-w-60">
       <h1 className="text-[2.75rem]">Add an athlete</h1>
-      <p className="mt-2 mb-4">Thanks, your consent is saved. Next you&apos;ll pick sports and enter numbers.</p>
+      <p className="mt-2 mb-4">Thanks for your consent. Next you&apos;ll pick sports and enter numbers.</p>
       <AthleteForm gradYears={gradYears} birthYears={birthYears} />
     </div>
   );

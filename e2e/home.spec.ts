@@ -171,7 +171,7 @@ test("football height uses the range ruler and reads feet and inches", async ({ 
     "You're inside the typical FCS range. That range is 6' 1\" to 6' 4\". 1 inch under the typical FBS range (6' 2\" to 6' 6\").",
   );
   // Every lane says in words where the number sits, not just by position.
-  await expect(ruler.getByTestId("lane-fit")).toHaveText(["1 inch under", "inside", "inside", "inside"]);
+  await expect(ruler.getByTestId("lane-fit")).toHaveText(["1 inch short", "In this range", "In this range", "In this range"]);
   await expect(ruler.getByTestId("ruler-chip")).toHaveText("6' 1\"");
 });
 
@@ -295,7 +295,9 @@ test("tick marks use one natural step per metric and say what it is", async ({ p
 
   await pick(page, "Position", "Outfield (corner)");
   await pick(page, "What was measured", "60-yard dash");
-  await expect(page.getByTestId("tick-caption")).toHaveText("Each tick is 0.1 seconds.");
+  // These levels are exactly 0.1 sec apart, so the tape marks every 0.05 sec rather than showing no ticks.
+  await expect(page.getByTestId("tick-caption")).toHaveText("Each tick is 0.05 seconds.");
+  expect(await rulers(page).first().getByTestId("ruler-tick").count()).toBeGreaterThan(0);
 
   // Long throws tick in whole feet. The step widens only when a band would be crowded.
   await pick(page, "Sport", "Track & Field");
@@ -317,7 +319,7 @@ test("quirks in a guide's data are explained in words", async ({ page }) => {
   await pick(page, "Position", "Outfield (corner)");
   await pick(page, "What was measured", "60-yard dash");
   await expect(rulers(page).first().getByTestId("guide-note").first()).toHaveText(
-    "This guide's D2 number (7.0 sec) is easier than its D3/NAIA number (6.9 sec). The ruler follows the guide's numbers.",
+    "In this guide, D2 asks for a slower time than D3/NAIA (7.0 sec against 6.9 sec). The ruler follows the guide.",
   );
 });
 

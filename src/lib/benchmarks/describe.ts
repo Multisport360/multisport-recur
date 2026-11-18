@@ -48,6 +48,9 @@ function thresholdHeadline(comparison: Comparison, subject: Subject): string {
   const top = comparison.reachedLevel;
   const base = `${who} in ${reached} range. ${top?.label} is the top level in this guide.`;
   if (!top || top.elite === null) return base;
+  if (comparison.set.better === "lower") {
+    return `${base} ${top.label} times in this guide run from ${formatValue(top.entry, unit)} down to ${formatValue(top.elite, unit)}.`;
+  }
   return `${base} This guide's ${top.label} numbers run from ${formatRange(top.entry, top.elite, unit)}.`;
 }
 

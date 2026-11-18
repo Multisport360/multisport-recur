@@ -52,7 +52,7 @@ export default async function SubscribePage({ searchParams }: Props) {
         <SubscribeForm agreement={terms.agreement} />
       </div>
       <p className="mt-2 text-[0.9375rem]">
-        Payment is handled by Stripe. {PLAN.name} is billed in US dollars.
+        Stripe takes the payment, in US dollars, for the {PLAN.name}.
       </p>
       <p className="mt-3">
         <Link href="/plan">Back to the training plan</Link>

@@ -36,8 +36,8 @@ export type ThresholdRulerModel = {
   kind: "threshold";
   bands: ThresholdBand[];
   marker: MarkerPlacement | null;
-  /** The distance between two tick marks, in the metric's unit. */
-  tickStep: number;
+  /** The distance between two tick marks, in the metric's unit. Null when no ticks are drawn. */
+  tickStep: number | null;
 };
 
 export type RangeLane = {
@@ -71,6 +71,8 @@ const SINGLE_LEVEL_STRETCH = 0.25;
 const MAX_TICKS_PER_BAND = 12;
 /** If the natural step would crowd a band, it grows by these factors in turn. */
 const STEP_GROWTH = [1, 2, 5, 10];
+/** If the natural step would leave every band empty, it shrinks by these factors in turn. */
+const STEP_SHRINK = [2, 5];
 const SECONDS_PER_MINUTE = 60;
 const INCHES_PER_FOOT = 12;
 const FEET_AND_INCHES_FROM = 48;
@@ -169,7 +171,13 @@ function tickStep(set: BenchmarkSet, edges: readonly number[], weights: readonly
   const fits = (step: number) =>
     edges.slice(1).every((edge, index) => (edge - (edges[index] as number)) / step <= MAX_TICKS_PER_BAND * (weights[index] as number));
   const factor = STEP_GROWTH.find((growth) => fits(natural * growth)) ?? (STEP_GROWTH[STEP_GROWTH.length - 1] as number);
-  return natural * factor;
+  const step = natural * factor;
+  const drawsTicks = (candidate: number) =>
+    edges.slice(1).some((edge, index) => ticksBetween(edges[index] as number, edge, candidate).length > 0);
+  if (drawsTicks(step)) return step;
+  // Levels exactly one step apart (4.9, 5.0, 5.1 sec) would leave the tape bare. Use a finer mark if one fits.
+  const finer = STEP_SHRINK.map((shrink) => step / shrink).find((candidate) => fits(candidate) && drawsTicks(candidate));
+  return finer ?? step;
 }
 
 /** Tick positions (0 to 1) strictly inside one band, at whole multiples of the step. */
@@ -200,7 +208,9 @@ export function thresholdRuler(set: BenchmarkSet, value: number | null): Thresho
   }));
 
   const marker = value === null ? null : placeOnEdges(edges, weights, toProgress(set, value));
-  return { kind: "threshold", bands, marker, tickStep: step };
+  // No caption for ticks that aren't there.
+  const hasTicks = bands.some((band) => band.ticks.length > 0);
+  return { kind: "threshold", bands, marker, tickStep: hasTicks ? step : null };
 }
 
 function rangeTickStep(span: number): number {

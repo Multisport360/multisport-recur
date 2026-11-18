@@ -51,7 +51,8 @@ export default async function PlanPage({ searchParams }: Props) {
         ) : null}
         <p data-testid="plan-not-subscribed" className="mt-2">
           The training plan is a paid add-on to the free gap report: {priceWithInterval()}, cancel any time. Each plan is
-          written and reviewed by a coach for your athlete&apos;s sport and position.
+          written and reviewed by a coach for your athlete&apos;s sport and position. Plans are still being written, so a
+          new subscriber sees &ldquo;your plan is coming&rdquo; until one is ready.
         </p>
         {isParent ? (
           <p className="mt-3">

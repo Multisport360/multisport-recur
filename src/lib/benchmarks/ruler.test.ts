@@ -114,6 +114,19 @@ describe("tick marks", () => {
     expect(naturalTickStep("lb", 300)).toBe(5);
   });
 
+  test("use a finer mark when levels sit exactly one natural step apart, so the tape is never bare", () => {
+    const FORTY = { sport: "Football", positionOrEvent: "WR", metric: "40-yard dash", unit: "sec", better: "lower" } as const;
+    const [forty] = buildSets([
+      row({ ...FORTY, level: "Division 3 / NAIA", levelCode: "D3_NAIA", entry: 5.2 }),
+      row({ ...FORTY, level: "Division 2", levelCode: "D2", entry: 5.1 }),
+      row({ ...FORTY, level: "FCS (D1)", levelCode: "D1_LOW", entry: 5.0 }),
+      row({ ...FORTY, level: "FBS (D1)", levelCode: "D1_HIGH", entry: 4.9 }),
+    ]);
+    const ruler = thresholdRuler(forty as BenchmarkSet, null);
+    expect(ruler.tickStep).toBeCloseTo(0.05);
+    expect(ruler.bands.slice(1, 4).every((band) => band.ticks.length === 1)).toBe(true);
+  });
+
   test("never crowd a band", () => {
     for (const band of thresholdRuler(setFor(DASH_QUERY), null).bands) {
       expect(band.ticks.length).toBeLessThanOrEqual(10);

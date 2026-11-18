@@ -56,7 +56,7 @@ export default async function AthletePage({ params, searchParams }: Props) {
   return (
     <div>
       <h1 className="text-[2.75rem] sm:text-[3.5rem]">{isOwnLogin ? "My gap report" : `${name}'s gap report`}</h1>
-      <p>{classLabel(athlete.grad_year, today)}</p>
+      <p className="mt-1">{classLabel(athlete.grad_year, today)}</p>
 
       {invited ? <Notice>The invite is on its way to {name}&apos;s email.</Notice> : null}
       {loginRemoved ? <Notice>{name}&apos;s login was removed.</Notice> : null}

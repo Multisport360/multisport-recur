@@ -30,12 +30,12 @@ function breakable(label: string) {
 /** Every fifth tick is taller, like the half-way marks on a tape. */
 const LONG_TICK_EVERY = 5;
 
-function BandStrip({ band, tickStep }: { band: ThresholdBand; tickStep: number }) {
+function BandStrip({ band }: { band: ThresholdBand }) {
   const tickColor = band.tint >= LIGHT_TICKS_FROM_TINT ? "bg-lane-white" : "bg-infield-navy";
   return (
     <div className="relative" style={{ backgroundColor: bandColor(band.tint) }}>
       {band.ticks.map((tick, index) => {
-        const isLong = tickStep > 0 && index % LONG_TICK_EVERY === LONG_TICK_EVERY - 1;
+        const isLong = index % LONG_TICK_EVERY === LONG_TICK_EVERY - 1;
         return (
           <div
             key={tick}
@@ -91,16 +91,18 @@ export function ThresholdTape({ set, model, valueLabel, flagRoughLevels }: Props
       <div className="relative">
         <div className="grid h-7 gap-x-[3px] border-y-2 border-infield-navy bg-lane-white sm:h-8" style={columns}>
           {model.bands.map((band, index) => (
-            <BandStrip key={index} band={band} tickStep={model.tickStep} />
+            <BandStrip key={index} band={band} />
           ))}
         </div>
         {model.marker ? <MarkerBar /> : null}
       </div>
 
       {valueLabel && model.marker ? <MarkerChip label={valueLabel} /> : <MarkerChipSpace />}
-      <p data-testid="tick-caption" className="mt-0.5 text-[0.9375rem]">
-        {tickCaption(model.tickStep, set.unit)}
-      </p>
+      {model.tickStep !== null ? (
+        <p data-testid="tick-caption" className="mt-0.5 text-[0.9375rem]">
+          {tickCaption(model.tickStep, set.unit)}
+        </p>
+      ) : null}
     </div>
   );
 }

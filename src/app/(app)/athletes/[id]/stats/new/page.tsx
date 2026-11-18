@@ -42,7 +42,7 @@ export default async function EnterNumberPage({ params, searchParams }: Props) {
     <div className="max-w-60">
       <h1 className="text-[2.75rem]">Enter a number</h1>
       <p className="mt-2 mb-4">
-        {sport.sport}, {sport.positionOrEvent}. Each number is saved as a new entry, so earlier numbers stay in the history.
+        {sport.sport}, {sport.positionOrEvent}. Earlier numbers stay in the history, so you can see progress over time.
       </p>
       <StatForm
         athleteId={athlete.id}

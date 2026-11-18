@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { canHaveLogin } from "@/lib/athletes/rules";
+import { canHaveLogin, firstLoginYear } from "@/lib/athletes/rules";
 import { removeAthlete, removeAthleteLogin } from "@/lib/family/actions";
 import type { AthleteRow } from "@/lib/supabase/database.types";
 
@@ -36,8 +36,7 @@ export function AthleteLoginSection({ athlete, today }: { athlete: AthleteRow; t
         </>
       ) : (
         <p data-testid="no-login-under-13" className="mt-1">
-          Athletes under 13 can&apos;t have their own login, so you enter {name}&apos;s numbers. This opens up the year
-          after {name} turns 13.
+          Athletes under 13 can&apos;t have their own login, so you enter {name}&apos;s numbers. You can invite {name} to their own login from January {firstLoginYear(athlete.birth_year)}.
         </p>
       )}
     </section>

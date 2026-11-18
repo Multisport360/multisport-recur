@@ -52,7 +52,7 @@ function guideNotes(set: BenchmarkSet, comparison: Comparison | null): string[] 
   for (const { higher, lower } of orderSurprises(set)) {
     if (!matters([higher.levelCode, lower.levelCode])) continue;
     notes.push(
-      `This guide's ${higher.label} number (${formatValue(higher.entry, set.unit)}) is easier than its ${lower.label} number (${formatValue(lower.entry, set.unit)}). The ruler follows the guide's numbers.`,
+      `In this guide, ${higher.label} asks for ${set.better === "lower" ? "a slower time" : "a lower number"} than ${lower.label} (${formatValue(higher.entry, set.unit)} against ${formatValue(lower.entry, set.unit)}). The ruler follows the guide.`,
     );
   }
   return notes;

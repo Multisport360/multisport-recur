@@ -25,6 +25,14 @@ export const HEIGHT_IN = { min: 36, max: 96 } as const;
 export const WEIGHT_LB = { min: 50, max: 450 } as const;
 export const FIRST_NAME_MAX = 40;
 
+/** Graduation year minus birth year for a typical high school graduate (17 to 19 at graduation). */
+export const GRAD_AGE = { min: 17, max: 19 } as const;
+
+/** The first calendar year an athlete can have their own login. */
+export function firstLoginYear(birthYear: number): number {
+  return birthYear + LOGIN_MIN_YEAR_GAP;
+}
+
 /** True when the athlete is certainly 13 or older. */
 export function canHaveLogin(birthYear: number, today: Date): boolean {
   return today.getFullYear() - birthYear >= LOGIN_MIN_YEAR_GAP;
@@ -88,7 +96,8 @@ export function athleteFormSchema(today: Date) {
   const gradYears = gradYearOptions(today).map((option) => option.gradYear);
   const birthYears = birthYearOptions(today);
 
-  return z.object({
+  return z
+    .object({
     firstName: z
       .string()
       .trim()
@@ -101,7 +110,19 @@ export function athleteFormSchema(today: Date) {
     heightIn: optionalHeight,
     weightLb: optionalWeight,
     gender: z.enum(GENDERS, "Choose who your athlete competes with."),
-  });
+  })
+    .superRefine((input, ctx) => {
+      // Only compare the two when each is a valid choice on its own; otherwise its own message is enough.
+      if (!gradYears.includes(input.gradYear) || !birthYears.includes(input.birthYear)) return;
+      const gap = input.gradYear - input.birthYear;
+      if (gap < GRAD_AGE.min || gap > GRAD_AGE.max) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["birthYear"],
+          message: `A student in the class of ${input.gradYear} is usually born between ${input.gradYear - GRAD_AGE.max} and ${input.gradYear - GRAD_AGE.min}. Check the birth year and the grade.`,
+        });
+      }
+    });
 }
 
 /** "10th grade, class of 2029". */

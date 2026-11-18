@@ -23,8 +23,8 @@ function laneColor(index: number, count: number): string {
 /** Where the athlete's number sits against one lane, in words: "inside", "1 inch under". */
 function fitWords(lane: RangeLane, set: BenchmarkSet): string | null {
   if (lane.fit === null) return null;
-  if (lane.fit === "inside") return "inside";
-  return `${formatGap(lane.distance, set.unit)} ${lane.fit}`;
+  if (lane.fit === "inside") return "In this range";
+  return `${formatGap(lane.distance, set.unit)} ${lane.fit === "under" ? "short" : "over"}`;
 }
 
 /**

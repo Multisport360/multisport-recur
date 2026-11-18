@@ -9,7 +9,7 @@ export default function NotFound() {
       <main className="mx-auto max-w-120 px-2 py-5">
         <div className="max-w-80">
           <h1 className="text-[2.75rem]">That page isn&apos;t here</h1>
-          <p className="mt-2 mb-3">The address may be mistyped, or the page belongs to another account.</p>
+          <p className="mt-2 mb-3">Check the address, or sign in to the account the page belongs to.</p>
           <Link href="/" className="button w-full sm:w-auto">
             Go to the home page
           </Link>

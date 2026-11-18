@@ -98,7 +98,7 @@ test("a multi-sport athlete gets a summary of the sport closest to college", asy
   const summary = page.getByTestId("closest-summary");
   await expect(summary.getByRole("heading")).toHaveText("Closest to college right now");
   await expect(summary).toContainText("Track & Field, 100m: 100m reaches D1 range.");
-  await expect(summary).toContainText("Baseball, Pitcher: fastball velocity in D2 range.");
+  await expect(summary).toContainText("Baseball, Pitcher: fastball velocity is in D2 range.");
 });
 
 test("grades 8 to 11 see the senior-year note on the report", async ({ page, admin, newParent }) => {
