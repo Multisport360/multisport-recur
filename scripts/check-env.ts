@@ -73,11 +73,12 @@ async function main(): Promise<void> {
     checks.push({ name: "Stripe key mode", ok: mode === "test mode", detail: mode });
   }
   if (isSet("RESEND_API_KEY")) {
-    checks.push(
-      await probe("Resend (API key)", "https://api.resend.com/domains", {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      }),
-    );
+    const resend = await probe("Resend (API key)", "https://api.resend.com/domains", {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    });
+    // A send-only key can't list domains, but sending is all the app does with it.
+    const isSendOnly = resend.detail.includes("restricted_api_key");
+    checks.push(isSendOnly ? { name: resend.name, ok: true, detail: "send-only key (fine: the app only sends)" } : resend);
   }
   if (isSet("ANTHROPIC_API_KEY")) {
     checks.push(

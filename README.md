@@ -40,7 +40,7 @@ npm run dev                       # then open http://localhost:3000
 | `STRIPE_SECRET_KEY` | the paid training plan | Stripe dashboard in **test mode**, Developers, API keys (`sk_test_...`) |
 | `STRIPE_WEBHOOK_SECRET` | billing emails and keeping subscriptions in step | see "Stripe" below (`whsec_...`) |
 | `RESEND_API_KEY` | athlete invites and billing emails | resend.com, API Keys |
-| `EMAIL_FROM` | sending from your own domain | an address on a domain verified in Resend. Without it, mail comes from Resend's test sender, which only delivers to your own Resend account |
+| `EMAIL_FROM` | sending from your own domain | an address on a domain verified in Resend. Leave it unset until you have a domain (see "Email" below) |
 | `ANTHROPIC_API_KEY` | AI tips on plans (off by default) | console.anthropic.com |
 | `PLAN_TIPS_FROM_CLAUDE` | turning AI tips on | set to `true` only once coach-reviewed templates exist |
 | `CONSENT_METHOD` | swapping the consent method | defaults to `checkbox_attestation` (see "Decisions still open") |
@@ -60,12 +60,21 @@ npm run db:seed    # load data/benchmarks.csv into the benchmarks table
 
 Row-level security is on for every table. A parent sees only their family's rows; an athlete login sees only its own athlete. These rules are also enforced in the database: no athlete row without a consent record, no login for an athlete under 13, stat entries can never be overwritten, and a family is deleted when its last parent login is deleted.
 
-### Supabase settings to check in the dashboard
+### Supabase settings
 
-1. **Authentication, Sign In / Providers, Email: turn on "Confirm email".** Without it, new parents are signed in straight away and no confirmation email is sent.
-2. **Authentication, Emails, SMTP: set up custom SMTP** (Resend works: host `smtp.resend.com`, user `resend`, password = your Resend API key). Supabase's built-in mailer only sends a few emails an hour.
-3. **Authentication, URL Configuration:** set Site URL to your site, and add `https://your-domain.com/auth/confirm` (and `http://localhost:3000/auth/confirm`) to Redirect URLs.
-4. **Optional, Authentication, Emails, templates:** the confirm page understands Supabase's default links. For the most reliable links across devices, change each template's link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email` (use `type=recovery` in the reset-password template).
+1. **"Confirm email" is OFF** (Authentication, Sign In / Providers, Email). This was decided in Nov 2026 because there is no custom email domain yet. New parents are signed in straight away and Supabase sends no email at sign-up. An end-to-end test checks this, and it fails on purpose if the setting is switched on (sign-up would then go to the "Check your email" page, which already exists).
+2. **Authentication, URL Configuration:** set Site URL to your site, and add `https://your-domain.com/auth/confirm` (and `http://localhost:3000/auth/confirm`) to Redirect URLs.
+3. **When you have a domain:** set up custom SMTP (Authentication, Emails, SMTP; Resend works: host `smtp.resend.com`, user `resend`, password = a Resend API key), then switch "Confirm email" on if you want it. For the most reliable links, change each email template's link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email` (`type=recovery` in the reset-password template).
+
+### Email (no custom domain yet)
+
+The app sends its own email through Resend: athlete invites and the three billing emails (signup confirmation, renewal reminder, cancel confirmation). Until a domain is verified in Resend, mail comes from `onboarding@resend.dev`, and **Resend only delivers it to the Resend account owner's own address and to Resend's test inboxes** (`delivered@resend.dev`, with optional `+label`). What that means today:
+
+- An athlete invite to any other address is refused by Resend. The page says the email couldn't be sent and creates no login.
+- Billing emails to any parent except you are refused and logged on the server (`[email] ... was not sent`). The subscription itself still works.
+- The end-to-end tests send to `delivered+<label>@resend.dev`, so they pass in this setup.
+
+To lift the limit: verify a domain in Resend, set `EMAIL_FROM` (for example `Multi-Sport Recur <hello@your-domain.com>`) locally and on Vercel, and nothing else changes. A send-only Resend key is enough; `npm run check:env` reports it as "send-only key".
 
 ## Tests
 
@@ -82,7 +91,7 @@ npm run build
 
 Tests that sign in run once (desktop width), not twice, because Supabase limits sign-ins per IP. If you still see `Request rate limit reached`, wait five minutes, or raise the limit under Authentication, Rate Limits.
 
-Two end-to-end tests send a real email (`e2e/sends-email.spec.ts`). They need `RESEND_API_KEY` and the Supabase email settings above.
+One end-to-end test sends a real email (`e2e/sends-email.spec.ts`, to Resend's test inbox). It needs `RESEND_API_KEY`. The checkout test creates a customer in your Stripe **test** account each run; that is harmless and can be cleared in the Stripe dashboard.
 
 ### Screenshots for the design review
 

@@ -4,30 +4,11 @@ import { addAthleteAsAdmin } from "../tests/db/helpers";
 import { emailLinkFor, expect, signIn, test, THIS_YEAR, type E2eFamily } from "./support/accounts";
 
 /**
- * Tests that send a real email. Each sends ONE message to a Resend test inbox
- * (delivered@resend.dev), so this file runs on the desktop project only
- * (see playwright.config.ts) instead of once per screen width.
+ * Tests that send a real email through Resend. Without a verified domain, Resend's test sender
+ * (onboarding@resend.dev) only delivers to the account owner and to Resend's test inboxes, so
+ * every address here is delivered+<label>@resend.dev. Each test sends ONE message, so this file
+ * runs on the desktop project only (see playwright.config.ts). Needs RESEND_API_KEY.
  */
-
-// Needs email delivery set up for Supabase Auth (see README, "Email").
-test("creating an account sends a confirmation email", async ({ page, admin }) => {
-  const email = `delivered+signup-${randomUUID().slice(0, 8)}@resend.dev`;
-
-  try {
-    await page.goto("/signup");
-    await page.getByLabel("Your email").fill(email);
-    await page.getByLabel("Password").fill(`pw-${randomUUID()}`);
-    await page.getByLabel(/I'm a parent or legal guardian/).check();
-    await page.getByRole("button", { name: "Create my account" }).click();
-
-    await expect(page).toHaveURL(/\/signup\/check-email$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Check your email");
-  } finally {
-    const users = await admin.auth.admin.listUsers({ perPage: 200 });
-    const created = users.data?.users.find((user) => user.email === email);
-    if (created) await admin.auth.admin.deleteUser(created.id);
-  }
-});
 
 /** Invite an athlete through the page. Sends one real email to a Resend test inbox. Needs RESEND_API_KEY. */
 async function inviteThroughPage(page: Page, parent: E2eFamily, athleteId: string, name: string): Promise<string> {
