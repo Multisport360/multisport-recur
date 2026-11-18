@@ -102,7 +102,8 @@ describe("screenReaderText", () => {
 describe("keepUnitsTogether", () => {
   test("joins numbers to their units with a non-breaking space", () => {
     expect(keepUnitsTogether("You're in D2 range. 6 mph to D1.")).toBe("You're in D2 range. 6\u00a0mph to D1.");
-    expect(keepUnitsTogether("(6' 1\" to 6' 4\"). 1 inch under")).toBe("(6'\u00a01\" to 6'\u00a04\"). 1\u00a0inch under");
+    expect(keepUnitsTogether("(6' 1\" to 6' 4\"). 1 inch under")).toBe("(6'\u00a01\"\u00a0to\u00a06'\u00a04\"). 1\u00a0inch under");
+    expect(keepUnitsTogether("(290 to 325 lb)")).toBe("(290\u00a0to\u00a0325\u00a0lb)");
   });
 
   test("leaves other spaces alone", () => {

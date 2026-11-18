@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { formatValue } from "@/lib/benchmarks/format";
+import { formatValue, tickCaption } from "@/lib/benchmarks/format";
 import { isRoughGuide } from "@/lib/benchmarks/levels";
 import type { ThresholdBand, ThresholdRulerModel } from "@/lib/benchmarks/ruler";
 import type { BenchmarkSet } from "@/lib/benchmarks/sets";
@@ -27,13 +27,24 @@ function breakable(label: string) {
   return label.split("/").flatMap((part, index) => (index === 0 ? [part] : ["/", <wbr key={index} />, part]));
 }
 
-function BandStrip({ band }: { band: ThresholdBand }) {
+/** Every fifth tick is taller, like the half-way marks on a tape. */
+const LONG_TICK_EVERY = 5;
+
+function BandStrip({ band, tickStep }: { band: ThresholdBand; tickStep: number }) {
   const tickColor = band.tint >= LIGHT_TICKS_FROM_TINT ? "bg-lane-white" : "bg-infield-navy";
   return (
     <div className="relative" style={{ backgroundColor: bandColor(band.tint) }}>
-      {band.ticks.map((tick) => (
-        <div key={tick} className={`absolute bottom-0 h-1 w-px ${tickColor}`} style={{ left: `${tick * 100}%` }} />
-      ))}
+      {band.ticks.map((tick, index) => {
+        const isLong = tickStep > 0 && index % LONG_TICK_EVERY === LONG_TICK_EVERY - 1;
+        return (
+          <div
+            key={tick}
+            data-testid="ruler-tick"
+            className={`absolute bottom-0 -ml-px w-[2px] ${isLong ? "h-[1.125rem]" : "h-1.5"} ${tickColor}`}
+            style={{ left: `${tick * 100}%` }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -60,7 +71,7 @@ export function ThresholdTape({ set, model, valueLabel, flagRoughLevels }: Props
       <div className="grid items-end" style={columns}>
         {model.bands.map((band, index) =>
           band.step ? (
-            <div key={index} className="border-l-2 border-infield-navy pt-0.5 pr-0.5 pb-1 pl-0.5">
+            <div key={index} className="border-l-2 border-infield-navy pt-0.5 pr-0.5 pb-1.5 pl-0.5">
               {band.step.levels.map((level) => (
                 <div key={level.levelCode} className="font-display text-[1.0625rem] leading-[1.1] font-bold sm:text-[1.375rem]">
                   {breakable(level.label)}
@@ -80,13 +91,16 @@ export function ThresholdTape({ set, model, valueLabel, flagRoughLevels }: Props
       <div className="relative">
         <div className="grid h-7 gap-x-[3px] border-y-2 border-infield-navy bg-lane-white sm:h-8" style={columns}>
           {model.bands.map((band, index) => (
-            <BandStrip key={index} band={band} />
+            <BandStrip key={index} band={band} tickStep={model.tickStep} />
           ))}
         </div>
         {model.marker ? <MarkerBar /> : null}
       </div>
 
       {valueLabel && model.marker ? <MarkerChip label={valueLabel} /> : <MarkerChipSpace />}
+      <p data-testid="tick-caption" className="mt-0.5 text-[0.9375rem]">
+        {tickCaption(model.tickStep, set.unit)}
+      </p>
     </div>
   );
 }

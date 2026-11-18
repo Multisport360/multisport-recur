@@ -10,7 +10,7 @@ export function markerStyle(marker: MarkerPlacement | null): CSSProperties {
  * The hurdle-yellow bar that crosses the ruler at the athlete's number.
  * `reach` says how far it sticks out above and below the strip it crosses.
  */
-export function MarkerBar({ reach = "-top-1 -bottom-1" }: { reach?: string }) {
+export function MarkerBar({ reach = "-top-0.5 -bottom-1" }: { reach?: string }) {
   return (
     <div
       data-testid="ruler-marker"

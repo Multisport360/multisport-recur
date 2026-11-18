@@ -198,8 +198,7 @@ export function BenchmarkExplorer({ sets }: { sets: BenchmarkSet[] }) {
 
       {needsSeniorTargetsNote(grade) ? (
         <p data-testid="senior-note" className="mt-3 max-w-80 border-l-4 border-infield-navy pl-2">
-          <strong>These are senior-year targets.</strong> A younger athlete isn&apos;t expected to be there yet. Choose a
-          grade above to change this note.
+          <strong>These are senior-year targets.</strong> A younger athlete isn&apos;t expected to be there yet.
         </p>
       ) : null}
 

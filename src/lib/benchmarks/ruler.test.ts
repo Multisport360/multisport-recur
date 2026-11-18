@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { rangeRuler, thresholdRuler } from "./ruler";
+import { naturalTickStep, rangeRuler, thresholdRuler } from "./ruler";
 import { buildSets, findSets, type BenchmarkSet } from "./sets";
 import {
   DASH_QUERY,
@@ -102,6 +102,16 @@ describe("tick marks", () => {
     expect(bands[1]?.ticks).toHaveLength(3);
     expect(bands[2]?.ticks).toHaveLength(5);
     expect(bands[1]?.ticks[0]).toBeCloseTo(0.25);
+  });
+
+  test("use the step a coach measures in, the same for every ruler of a metric", () => {
+    expect(thresholdRuler(velocity, null).tickStep).toBe(1);
+    expect(naturalTickStep("sec", 6.8)).toBe(0.1);
+    expect(naturalTickStep("sec", 50.4)).toBe(1);
+    expect(naturalTickStep("sec", 269)).toBe(5);
+    expect(naturalTickStep("in", 30)).toBe(1);
+    expect(naturalTickStep("in", 1873)).toBe(12);
+    expect(naturalTickStep("lb", 300)).toBe(5);
   });
 
   test("never crowd a band", () => {

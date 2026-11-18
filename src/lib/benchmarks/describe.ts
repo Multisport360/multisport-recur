@@ -113,5 +113,6 @@ export function screenReaderText(comparison: Comparison): string {
 export function keepUnitsTogether(text: string): string {
   return text
     .replace(/(\d) (mph|sec|lb|in|inch|inches)\b/g, "$1\u00a0$2")
-    .replace(/(\d') (\d)/g, "$1\u00a0$2");
+    .replace(/(\d') (\d)/g, "$1\u00a0$2")
+    .replace(/(\d"?) to (\d)/g, "$1\u00a0to\u00a0$2");
 }

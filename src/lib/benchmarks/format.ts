@@ -79,6 +79,15 @@ export function formatRange(low: number, high: number, unit: Unit): string {
     : `${lowText} to ${highText}`;
 }
 
+/** "Each tick is 1 mph.", "Each tick is 1 foot.", "Each tick is 0.1 second." */
+export function tickCaption(step: number, unit: Unit): string {
+  if (unit === "in" && step % INCHES_PER_FOOT === 0) {
+    const feet = step / INCHES_PER_FOOT;
+    return `Each tick is ${feet} ${plural(feet, "foot", "feet")}.`;
+  }
+  return `Each tick is ${spokenValue(step, unit)}.`;
+}
+
 /** A distance between two marks: "6 mph", "0.15 sec", "3 inches". */
 export function formatGap(gap: number, unit: Unit): string {
   switch (unit) {
@@ -122,6 +131,13 @@ const PLAIN_NUMBER = /^\d+(\.\d+)?$|^\.\d+$/;
 const MINUTES_AND_SECONDS = /^(\d+):(\d{1,2}(?:\.\d+)?)$/;
 const FEET_AND_INCHES = /^(\d+)\s*(?:'|ft\.?|feet|foot|-)\s*(?:(\d+(?:\.\d+)?)\s*(?:"|in\.?|inches|inch)?)?$/i;
 
+/** An example in the size people really type for this metric: 6'2 for a height, 156'1 for a discus throw. */
+function feetExample(typical: number | undefined): string {
+  if (typical === undefined) return "6'2";
+  const whole = Math.round(typical);
+  return `${Math.floor(whole / INCHES_PER_FOOT)}'${whole % INCHES_PER_FOOT}`;
+}
+
 export type InputGuide = {
   /** Goes after the field label: "Fastball velocity (mph)". */
   unitLabel: string;
@@ -147,7 +163,7 @@ export function inputGuide(unit: Unit, typical?: number): InputGuide {
     case "in":
       return typical !== undefined && typical < FEET_AND_INCHES_FROM
         ? { unitLabel: "inches", hint: "Type inches, like 30." }
-        : { unitLabel: "feet and inches", hint: "Type feet and inches, like 6'2 or 21'8." };
+        : { unitLabel: "feet and inches", hint: `Type feet and inches, like ${feetExample(typical)}.` };
   }
 }
 

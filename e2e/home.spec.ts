@@ -168,7 +168,7 @@ test("football height uses the range ruler and reads feet and inches", async ({ 
 
   const ruler = rulers(page).first();
   await expect(result(ruler)).toHaveText(
-    "You're inside the typical FCS range (6' 1\" to 6' 4\"). 1 inch under the typical FBS range (6' 2\" to 6' 6\").",
+    "You're inside the typical FCS range. That range is 6' 1\" to 6' 4\". 1 inch under the typical FBS range (6' 2\" to 6' 6\").",
   );
   // Every lane says in words where the number sits, not just by position.
   await expect(ruler.getByTestId("lane-fit")).toHaveText(["1 inch under", "inside", "inside", "inside"]);
@@ -286,6 +286,21 @@ test("the page never scrolls sideways", async ({ page }) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
   }
+});
+
+test("tick marks use one natural step per metric and say what it is", async ({ page }) => {
+  await page.goto("/");
+  // Both pitcher-velocity rulers tick every 1 mph.
+  await expect(page.getByTestId("tick-caption")).toHaveText(["Each tick is 1 mph.", "Each tick is 1 mph."]);
+
+  await pick(page, "Position", "Outfield (corner)");
+  await pick(page, "What was measured", "60-yard dash");
+  await expect(page.getByTestId("tick-caption")).toHaveText("Each tick is 0.1 seconds.");
+
+  // Long throws tick in whole feet. The step widens only when a band would be crowded.
+  await pick(page, "Sport", "Track & Field");
+  await pick(page, "Event", "Discus");
+  await expect(page.getByTestId("tick-caption")).toHaveText(/^Each tick is \d+ (foot|feet)\.$/);
 });
 
 test("quirks in a guide's data are explained in words", async ({ page }) => {

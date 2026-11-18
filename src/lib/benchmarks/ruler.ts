@@ -1,4 +1,5 @@
 import type { BenchmarkSet, LevelMark, Step } from "./sets.ts";
+import type { Unit } from "./types.ts";
 
 /**
  * Where things sit on the GapRuler. Positions are fractions from 0 (left edge) to 1 (right edge).
@@ -35,6 +36,8 @@ export type ThresholdRulerModel = {
   kind: "threshold";
   bands: ThresholdBand[];
   marker: MarkerPlacement | null;
+  /** The distance between two tick marks, in the metric's unit. */
+  tickStep: number;
 };
 
 export type RangeLane = {
@@ -64,9 +67,13 @@ const SINGLE_LEVEL_TINT = 0.6;
 const LEAD_IN_WEIGHT = 0.5;
 /** With only one level there are no steps to measure, so the end stretches are this share of the entry number. */
 const SINGLE_LEVEL_STRETCH = 0.25;
-/** No band shows more tick marks than this. */
-const MAX_TICKS_PER_BAND = 10;
-const TICK_STEPS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 12, 24, 60, 120, 240, 600];
+/** A full-width band shows at most this many ticks; the half-width lead-in, half as many. */
+const MAX_TICKS_PER_BAND = 12;
+/** If the natural step would crowd a band, it grows by these factors in turn. */
+const STEP_GROWTH = [1, 2, 5, 10];
+const SECONDS_PER_MINUTE = 60;
+const INCHES_PER_FOOT = 12;
+const FEET_AND_INCHES_FROM = 48;
 /** Empty space either side of the range lanes, as a share of the widest span. */
 const RANGE_PADDING = 0.15;
 const TARGET_RANGE_TICKS = 5;
@@ -137,10 +144,32 @@ function placeOnEdges(edges: readonly number[], weights: readonly number[], prog
   return { position: clamp01((weightBefore + share * (weights[band] as number)) / totalWeight), offScale: null };
 }
 
-/** The smallest round step that keeps every band at or under the tick limit. */
-function tickStep(edges: readonly number[]): number {
-  const widest = Math.max(...edges.slice(1).map((edge, index) => edge - (edges[index] as number)));
-  return TICK_STEPS.find((step) => widest / step <= MAX_TICKS_PER_BAND) ?? (TICK_STEPS[TICK_STEPS.length - 1] as number);
+/**
+ * The step a coach would measure in: 1 mph, 5 lb, 1 inch or 1 foot, a tenth of a second
+ * for a sprint, a second for a lap, five seconds for a mile. It depends only on the unit and
+ * the size of the numbers, so two rulers for the same metric always tick the same way.
+ */
+export function naturalTickStep(unit: Unit, typical: number): number {
+  switch (unit) {
+    case "mph":
+      return 1;
+    case "lb":
+      return 5;
+    case "in":
+      return typical < FEET_AND_INCHES_FROM ? 1 : INCHES_PER_FOOT;
+    case "sec":
+      if (typical < 15) return 0.1;
+      return typical < SECONDS_PER_MINUTE ? 1 : 5;
+  }
+}
+
+/** The natural step, made coarser only if it would crowd a band. */
+function tickStep(set: BenchmarkSet, edges: readonly number[], weights: readonly number[]): number {
+  const natural = naturalTickStep(set.unit, set.steps[0]?.entry ?? 0);
+  const fits = (step: number) =>
+    edges.slice(1).every((edge, index) => (edge - (edges[index] as number)) / step <= MAX_TICKS_PER_BAND * (weights[index] as number));
+  const factor = STEP_GROWTH.find((growth) => fits(natural * growth)) ?? (STEP_GROWTH[STEP_GROWTH.length - 1] as number);
+  return natural * factor;
 }
 
 /** Tick positions (0 to 1) strictly inside one band, at whole multiples of the step. */
@@ -161,7 +190,7 @@ function tintFor(stepIndex: number, stepCount: number): number {
 export function thresholdRuler(set: BenchmarkSet, value: number | null): ThresholdRulerModel {
   const edges = thresholdEdges(set);
   const weights = bandWeights(edges.length - 1);
-  const step = tickStep(edges);
+  const step = tickStep(set, edges, weights);
 
   const bands: ThresholdBand[] = weights.map((weight, index) => ({
     step: index === 0 ? null : (set.steps[index - 1] as Step),
@@ -171,7 +200,7 @@ export function thresholdRuler(set: BenchmarkSet, value: number | null): Thresho
   }));
 
   const marker = value === null ? null : placeOnEdges(edges, weights, toProgress(set, value));
-  return { kind: "threshold", bands, marker };
+  return { kind: "threshold", bands, marker, tickStep: step };
 }
 
 function rangeTickStep(span: number): number {

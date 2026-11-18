@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatGap, formatRange, formatValue, inputGuide, parseValueInput, spokenValue } from "./format";
+import { formatGap, formatRange, formatValue, inputGuide, parseValueInput, spokenValue, tickCaption } from "./format";
 
 describe("formatValue", () => {
   test("speeds and weights drop needless decimals", () => {
@@ -56,6 +56,15 @@ describe("formatRange", () => {
   });
 });
 
+describe("tickCaption", () => {
+  test("names the step in words", () => {
+    expect(tickCaption(1, "mph")).toBe("Each tick is 1 mph.");
+    expect(tickCaption(0.1, "sec")).toBe("Each tick is 0.1 seconds.");
+    expect(tickCaption(12, "in")).toBe("Each tick is 1 foot.");
+    expect(tickCaption(1, "in")).toBe("Each tick is 1 inch.");
+  });
+});
+
 describe("inputGuide", () => {
   test("short times are typed in seconds and long ones as minutes and seconds", () => {
     expect(inputGuide("sec", 11.4).unitLabel).toBe("seconds");
@@ -67,7 +76,8 @@ describe("inputGuide", () => {
 
   test("a vertical jump is typed in inches and a height or throw in feet and inches", () => {
     expect(inputGuide("in", 30)).toEqual({ unitLabel: "inches", hint: "Type inches, like 30." });
-    expect(inputGuide("in", 74).unitLabel).toBe("feet and inches");
+    expect(inputGuide("in", 74)).toEqual({ unitLabel: "feet and inches", hint: "Type feet and inches, like 6'2." });
+    expect(inputGuide("in", 1873).hint).toBe("Type feet and inches, like 156'1.");
     expect(inputGuide("in", 1873).unitLabel).toBe("feet and inches");
   });
 });
