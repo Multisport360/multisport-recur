@@ -99,19 +99,35 @@ export type SubscriptionRow = {
 
 export type PlanTemplateRow = {
   id: string;
-  sport: string;
-  position_or_event: string | null;
-  metric: string | null;
-  min_grade: number;
-  max_grade: number;
-  title: string;
-  summary: string;
-  body: unknown;
-  safety_notes: string;
+  version: string;
+  review_status: "draft" | "approved";
   reviewed_by: string | null;
-  reviewed_at: string | null;
-  is_published: boolean;
+  reviewed_on: string | null;
+  /** The template library (data/plan_templates.draft.json). Always checked with zod before use. */
+  content: unknown;
   created_at: string;
+  updated_at: string;
+};
+
+export type PlanScreenAnswersRow = {
+  id: string;
+  athlete_id: string;
+  pain_now: boolean;
+  throwing_arm_pain: boolean | null;
+  has_training_age: boolean;
+  season_phase: string;
+  answered_by: string | null;
+  answered_at: string;
+};
+
+export type PlanSessionCompletionRow = {
+  id: string;
+  athlete_id: string;
+  block_start: string;
+  week: number;
+  day: number;
+  completed_by: string | null;
+  completed_at: string;
 };
 
 type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -148,20 +164,15 @@ export type Database = {
       >;
       plan_templates: Table<
         PlanTemplateRow,
-        WithOptional<
-          PlanTemplateRow,
-          | "id"
-          | "position_or_event"
-          | "metric"
-          | "min_grade"
-          | "max_grade"
-          | "summary"
-          | "body"
-          | "reviewed_by"
-          | "reviewed_at"
-          | "is_published"
-          | "created_at"
-        >
+        WithOptional<PlanTemplateRow, "id" | "review_status" | "reviewed_by" | "reviewed_on" | "created_at" | "updated_at">
+      >;
+      plan_screen_answers: Table<
+        PlanScreenAnswersRow,
+        WithOptional<PlanScreenAnswersRow, "id" | "throwing_arm_pain" | "answered_by" | "answered_at">
+      >;
+      plan_session_completions: Table<
+        PlanSessionCompletionRow,
+        WithOptional<PlanSessionCompletionRow, "id" | "completed_by" | "completed_at">
       >;
     };
     Views: Record<never, never>;

@@ -19,6 +19,8 @@
     "check:env": "node --env-file=.env.local scripts/check-env.ts",
     "db:check": "node scripts/seed-benchmarks.ts --check",
     "db:seed": "node --env-file=.env.local scripts/seed-benchmarks.ts",
+    "plans:check": "node scripts/seed-plan-templates.ts --check",
+    "plans:seed": "node --env-file=.env.local scripts/seed-plan-templates.ts",
     "db:push": "node --env-file=.env.local scripts/db-push.ts",
     "screenshots": "node --env-file=.env.local scripts/screenshots.ts"
   },

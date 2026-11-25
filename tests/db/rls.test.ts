@@ -36,6 +36,8 @@ const FAMILY_TABLES = [
   "stat_entries",
   "subscriptions",
   "plan_templates",
+  "plan_screen_answers",
+  "plan_session_completions",
 ] as const;
 
 let admin: Client;
@@ -74,30 +76,18 @@ beforeAll(async () => {
   });
   if (subscription.error) throw new Error(`could not add subscription: ${subscription.error.message}`);
 
+  // Version names are unique per run, so parallel runs never collide.
+  const run = crypto.randomUUID().slice(0, 8);
   const templates = await admin
     .from("plan_templates")
     .insert([
-      {
-        sport: "Baseball",
-        title: "RLS test template (published)",
-        safety_notes: "Test only.",
-        reviewed_by: "RLS test",
-        reviewed_at: new Date().toISOString(),
-        is_published: true,
-      },
-      {
-        sport: "Baseball",
-        title: "RLS test template (draft)",
-        safety_notes: "Test only.",
-        reviewed_by: null,
-        reviewed_at: null,
-        is_published: false,
-      },
+      { version: `rls-approved-${run}`, review_status: "approved", reviewed_by: "RLS test", reviewed_on: "2026-11-24", content: { test: true } },
+      { version: `rls-draft-${run}`, review_status: "draft", content: { test: true } },
     ])
-    .select("id, is_published");
+    .select("id, review_status");
   if (templates.error) throw new Error(`could not add plan templates: ${templates.error.message}`);
-  publishedTemplateId = templates.data.find((t) => t.is_published)?.id ?? "";
-  draftTemplateId = templates.data.find((t) => !t.is_published)?.id ?? "";
+  publishedTemplateId = templates.data.find((t) => t.review_status === "approved")?.id ?? "";
+  draftTemplateId = templates.data.find((t) => t.review_status === "draft")?.id ?? "";
 });
 
 afterAll(async () => {
@@ -313,7 +303,7 @@ describe("an athlete login sees only its own athlete", () => {
 });
 
 describe("training plan templates", () => {
-  test("a family with an active subscription sees published templates only", async () => {
+  test("a family with an active subscription sees approved templates only, never drafts", async () => {
     const visible = await familyB.user.client
       .from("plan_templates")
       .select("id")
@@ -324,6 +314,78 @@ describe("training plan templates", () => {
   test("a family without a subscription sees no templates", async () => {
     const visible = await a.from("plan_templates").select("id").in("id", [publishedTemplateId, draftTemplateId]);
     expect(visible.data).toEqual([]);
+  });
+
+  test("signed-in users cannot add or approve templates", async () => {
+    const insert = await familyB.user.client.from("plan_templates").insert({ version: "fake", content: {} });
+    expect(insert.error?.code).toBe(PERMISSION_DENIED);
+    const approve = await familyB.user.client.from("plan_templates").update({ review_status: "approved" }).eq("id", draftTemplateId);
+    expect(approve.error?.code).toBe(PERMISSION_DENIED);
+  });
+
+  test("the database refuses an approved template with no reviewer or review date", async () => {
+    const attempt = await admin.from("plan_templates").insert({ version: `rls-bad-${crypto.randomUUID()}`, review_status: "approved", content: {} });
+    expect(attempt.error?.message).toContain("plan_templates_approved_needs_review");
+  });
+});
+
+const SCREEN_ANSWERS = { pain_now: false, throwing_arm_pain: false, has_training_age: true, season_phase: "off_season" } as const;
+
+describe("plan screen answers", () => {
+  test("a parent answers for their own athlete, and can read the answers", async () => {
+    const saved = await a.from("plan_screen_answers").insert({ athlete_id: athleteA1.athleteId, ...SCREEN_ANSWERS }).select("athlete_id").single();
+    expect(saved.error).toBeNull();
+    const read = await a.from("plan_screen_answers").select("athlete_id").eq("athlete_id", athleteA1.athleteId);
+    expect(read.data?.length).toBeGreaterThan(0);
+  });
+
+  test("a parent cannot answer for, or read, another family's athlete", async () => {
+    const attempt = await a.from("plan_screen_answers").insert({ athlete_id: athleteB1.athleteId, ...SCREEN_ANSWERS });
+    expect(attempt.error?.code).toBe(PERMISSION_DENIED);
+    await admin.from("plan_screen_answers").insert({ athlete_id: athleteB1.athleteId, ...SCREEN_ANSWERS });
+    const read = await a.from("plan_screen_answers").select("id").eq("athlete_id", athleteB1.athleteId);
+    expect(read.data).toEqual([]);
+  });
+
+  test("an athlete login can read its own answers but not answer them", async () => {
+    const read = await athleteLogin.client.from("plan_screen_answers").select("athlete_id").eq("athlete_id", athleteA1.athleteId);
+    expect(read.data?.length).toBeGreaterThan(0);
+    const attempt = await athleteLogin.client.from("plan_screen_answers").insert({ athlete_id: athleteA1.athleteId, ...SCREEN_ANSWERS });
+    expect(attempt.error?.code).toBe(PERMISSION_DENIED);
+  });
+
+  test("answers are never changed in place: a change is a new row", async () => {
+    const update = await a.from("plan_screen_answers").update({ pain_now: true }).eq("athlete_id", athleteA1.athleteId);
+    expect(update.error?.code).toBe(PERMISSION_DENIED);
+    const remove = await a.from("plan_screen_answers").delete().eq("athlete_id", athleteA1.athleteId).select("id");
+    expect(remove.error?.code).toBe(PERMISSION_DENIED);
+  });
+});
+
+describe("finished plan sessions", () => {
+  const SESSION = { block_start: "2026-11-23", week: 1, day: 0 } as const;
+
+  test("a parent ticks and unticks a session for their own athlete", async () => {
+    const tick = await a.from("plan_session_completions").insert({ athlete_id: athleteA2.athleteId, ...SESSION });
+    expect(tick.error).toBeNull();
+    const untick = await a.from("plan_session_completions").delete().eq("athlete_id", athleteA2.athleteId).select("id");
+    expect(untick.data).toHaveLength(1);
+  });
+
+  test("an athlete login ticks its own sessions only", async () => {
+    const own = await athleteLogin.client.from("plan_session_completions").insert({ athlete_id: athleteA1.athleteId, ...SESSION });
+    expect(own.error).toBeNull();
+    const sibling = await athleteLogin.client.from("plan_session_completions").insert({ athlete_id: athleteA2.athleteId, ...SESSION });
+    expect(sibling.error?.code).toBe(PERMISSION_DENIED);
+  });
+
+  test("another family can neither tick nor see the sessions", async () => {
+    const attempt = await familyB.user.client.from("plan_session_completions").insert({ athlete_id: athleteA1.athleteId, ...SESSION, day: 2 });
+    expect(attempt.error?.code).toBe(PERMISSION_DENIED);
+    const read = await familyB.user.client.from("plan_session_completions").select("id").eq("athlete_id", athleteA1.athleteId);
+    expect(read.data).toEqual([]);
+    const remove = await familyB.user.client.from("plan_session_completions").delete().eq("athlete_id", athleteA1.athleteId).select("id");
+    expect(remove.data ?? []).toEqual([]);
   });
 });
 
