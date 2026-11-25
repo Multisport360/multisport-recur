@@ -73,7 +73,8 @@ test("a production build never shows a draft, even with ALLOW_DRAFT_PLANS=true: 
 });
 
 test.describe("local development with ALLOW_DRAFT_PLANS=true", () => {
-  test.use({ baseURL: DEV_URL });
+  // A browser on Central time, to show the family's time zone comes from the browser at sign-up.
+  test.use({ baseURL: DEV_URL, timezoneId: "America/Chicago" });
 
   test("sign up, consent, add an athlete, enter a number, pay with the test card, answer the questions, see the draft plan", async ({ page, admin }) => {
     test.skip(Boolean(process.env.E2E_BASE_URL), "Needs the local dev server that playwright.config.ts starts.");
@@ -90,6 +91,7 @@ test.describe("local development with ALLOW_DRAFT_PLANS=true", () => {
       await page.getByLabel(/I'm a parent or legal guardian/).check();
       await page.getByRole("button", { name: "Create my account" }).click();
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("My athletes", { timeout: 60_000 });
+      expect(await familyTimeZoneFor(admin, email)).toBe("America/Chicago");
 
       // Consent comes before the athlete.
       await page.getByRole("link", { name: "Add an athlete" }).first().click();
@@ -219,6 +221,39 @@ test("with an approved library: the plan shows without a banner, behind the paid
     await removeApproved();
   }
 });
+
+test("an answer saved at 8 pm Eastern shows that day's date for an Eastern family, and the next day's for a UTC family", async ({ page, admin, newParent }) => {
+  test.setTimeout(90_000);
+  const removeApproved = await addApprovedLibrary(admin);
+  try {
+    const family = await newParent("plans-8pm");
+    const athleteId = await ninthGradePitcher(admin, family);
+    await subscribe(admin, family);
+    // Tuesday Nov 24, 2026, 8 pm Eastern = Wednesday Nov 25, 1 am UTC.
+    await answerScreens(admin, athleteId, { throwing_arm_pain: false, answered_at: "2026-11-25T01:00:00Z" });
+    await signIn(page, family.user);
+
+    // Families made before time zones were stored are on Eastern time.
+    expect((await admin.from("families").select("timezone").eq("id", family.familyId).single()).data?.timezone).toBe("America/New_York");
+    await page.goto(`/plan/${athleteId}`);
+    await expect(page.getByText(/^Answers from /)).toContainText("Answers from Nov 24, 2026.");
+
+    await admin.from("families").update({ timezone: "UTC" }).eq("id", family.familyId);
+    await page.reload();
+    await expect(page.getByText(/^Answers from /)).toContainText("Answers from Nov 25, 2026.");
+  } finally {
+    await removeApproved();
+  }
+});
+
+async function familyTimeZoneFor(admin: Client, email: string): Promise<string | null> {
+  const users = await admin.auth.admin.listUsers({ perPage: 200 });
+  const user = users.data?.users.find((candidate) => candidate.email === email);
+  if (!user) return null;
+  const guardian = await admin.from("guardians").select("family_id").eq("user_id", user.id).single();
+  const family = await admin.from("families").select("timezone").eq("id", guardian.data?.family_id ?? "").single();
+  return family.data?.timezone ?? null;
+}
 
 /** Deletes a parent made through the real sign-up form, and cancels their Stripe test subscription. */
 async function removeSignedUpParent(admin: Client, email: string) {

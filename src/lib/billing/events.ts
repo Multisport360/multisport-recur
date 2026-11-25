@@ -20,6 +20,8 @@ export type BillingStore = {
   save(familyId: string, customerId: string, fields: SubscriptionFields): Promise<SubscriptionRow | null>;
   markReminderSent(familyId: string, periodEnd: string): Promise<void>;
   guardianEmail(familyId: string): Promise<string | null>;
+  /** The family's IANA time zone, so dates in emails are their own calendar days. */
+  familyTimeZone(familyId: string): Promise<string>;
 };
 
 export type BillingDeps = {
@@ -44,8 +46,8 @@ function priceText(fields: Pick<SubscriptionFields, "price_cents" | "billing_int
   return `${formatPrice(cents)} a ${fields.billing_interval ?? PLAN.interval}`;
 }
 
-function dateText(iso: string | null): string {
-  return iso ? formatLongDate(new Date(iso)) : "the end of the current period";
+function dateText(iso: string | null, timeZone: string): string {
+  return iso ? formatLongDate(new Date(iso), timeZone) : "the end of the current period";
 }
 
 async function emailFamily(deps: BillingDeps, familyId: string, content: Omit<Email, "to">): Promise<string> {
@@ -69,14 +71,15 @@ export async function applySubscription(
   const before = await deps.store.save(familyId, customerId, fields);
   const was = planAccess(before);
   const now = planAccess(fields);
+  const timeZone = await deps.store.familyTimeZone(familyId);
 
   if (!hasPlanAccess(was) && now.state === "active") {
-    const note = await emailFamily(deps, familyId, subscriptionStartedEmail({ price: priceText(fields), renewsOn: dateText(fields.current_period_end) }));
+    const note = await emailFamily(deps, familyId, subscriptionStartedEmail({ price: priceText(fields), renewsOn: dateText(fields.current_period_end, timeZone) }));
     return { handled: true, note: `subscription started; ${note}` };
   }
   const isNewlyCancelled = was.state === "active" && (now.state === "ending" || now.state === "ended");
   if (isNewlyCancelled) {
-    const accessUntil = now.state === "ending" ? dateText(fields.current_period_end) : null;
+    const accessUntil = now.state === "ending" ? dateText(fields.current_period_end, timeZone) : null;
     const note = await emailFamily(deps, familyId, subscriptionCanceledEmail({ accessUntil }));
     return { handled: true, note: `subscription cancelled; ${note}` };
   }
@@ -101,7 +104,8 @@ async function onUpcomingInvoice(deps: BillingDeps, invoice: Stripe.Invoice): Pr
     return { handled: true, note: "reminder already sent for this period" };
   }
   const amount = invoice.amount_due > 0 ? formatPrice(invoice.amount_due) : formatPrice(row.price_cents ?? PLAN.priceCents);
-  const note = await emailFamily(deps, row.family_id, renewalReminderEmail({ amount, renewsOn: dateText(row.current_period_end) }));
+  const timeZone = await deps.store.familyTimeZone(row.family_id);
+  const note = await emailFamily(deps, row.family_id, renewalReminderEmail({ amount, renewsOn: dateText(row.current_period_end, timeZone) }));
   if (note === "email sent") await deps.store.markReminderSent(row.family_id, row.current_period_end);
   return { handled: true, note: `renewal reminder: ${note}` };
 }

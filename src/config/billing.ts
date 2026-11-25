@@ -4,6 +4,9 @@
  * PLACEHOLDER: $12 a month has NOT been decided. Kai sets the real price and interval.
  * Change it here only; every page, the checkout and the emails read from this file.
  */
+
+import { formatLongDateIn } from "@/lib/dates";
+
 export const PLAN = {
   name: "Multi-Sport Recur training plan",
   priceCents: 1200,
@@ -40,24 +43,9 @@ export function addOneMonth(date: Date): Date {
   );
 }
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-/** "December 17, 2026". Uses the UTC calendar date, the way Stripe stamps billing dates. */
-export function formatLongDate(date: Date): string {
-  return `${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`;
+/** "December 17, 2026": the calendar day that moment falls on in the family's time zone. */
+export function formatLongDate(date: Date, timeZone: string): string {
+  return formatLongDateIn(date, timeZone);
 }
 
 export type CheckoutTerms = {
@@ -69,12 +57,12 @@ export type CheckoutTerms = {
 };
 
 /** Everything a parent must see before checkout (CLAUDE.md billing rules). */
-export function checkoutTerms(today: Date): CheckoutTerms {
+export function checkoutTerms(today: Date, timeZone: string): CheckoutTerms {
   const price = formatPrice(PLAN.priceCents);
   return {
     firstCharge: `You pay ${price} today.`,
     renewal: `It renews every ${PLAN.interval} until you cancel.`,
-    nextCharge: `Your next charge is ${price} on ${formatLongDate(addOneMonth(today))}.`,
+    nextCharge: `Your next charge is ${price} on ${formatLongDate(addOneMonth(today), timeZone)}.`,
     howToCancel:
       "Cancel any time from your Account page in two clicks. You keep the plan until the end of the month you've paid for, and you won't be charged again.",
     agreement: `I understand this subscription renews automatically at ${price} every ${PLAN.interval} until I cancel.`,

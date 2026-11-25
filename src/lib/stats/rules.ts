@@ -15,13 +15,6 @@ export const HOW_MEASURED_LABELS: Record<HowMeasured, string> = {
   event: "At a showcase, combine or meet",
 };
 
-/** YYYY-MM-DD in the server's local time. */
-export function isoDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
 /** Checks the add-a-sport form against the positions or events that have benchmarks for the athlete's gender. */
 export function sportFormSchema(sets: readonly BenchmarkSet[], gender: Gender) {
   return z
@@ -42,7 +35,8 @@ type StatContext = {
   sport: string;
   positionOrEvent: string;
   gender: Gender;
-  today: Date;
+  /** YYYY-MM-DD: today in the family's time zone. A measurement can't be dated after it. */
+  today: string;
 };
 
 /**
@@ -51,7 +45,7 @@ type StatContext = {
  */
 export function statFormSchema({ sets, sport, positionOrEvent, gender, today }: StatContext) {
   const metrics = listMetrics(sets, { sport, positionOrEvent, gender });
-  const latestAllowed = isoDate(today);
+  const latestAllowed = today;
 
   const howOptions: readonly string[] = HOW_MEASURED;
 

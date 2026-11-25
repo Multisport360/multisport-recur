@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
 import { buildSets } from "@/lib/benchmarks/sets";
 import { DASH_ROWS, row, VELOCITY_ROWS } from "@/lib/benchmarks/test-fixtures";
-import { isoDate, sportFormSchema, statFormSchema } from "./rules";
+import { sportFormSchema, statFormSchema } from "./rules";
 
 const SETS = buildSets([
   ...VELOCITY_ROWS,
   ...DASH_ROWS,
   row({ sport: "Track & Field", positionOrEvent: "100m hurdles", metric: "100m hurdles", unit: "sec", better: "lower", gender: "Female", level: "Division 1", levelCode: "D1", entry: 15.2 }),
 ]);
-const TODAY = new Date(2026, 10, 17);
+const TODAY = "2026-11-17";
 const context = { sets: SETS, sport: "Baseball", positionOrEvent: "Pitcher", gender: "Male" as const, today: TODAY };
 const VALID = { metric: "Fastball velocity", value: "84", measuredOn: "2026-11-01", howMeasured: "coach" };
 
@@ -39,7 +39,7 @@ describe("statFormSchema", () => {
   test("a date in the future or before 2015 is refused", () => {
     expect(problems({ ...VALID, measuredOn: "2026-11-18" })).toEqual({ measuredOn: "The date can't be in the future." });
     expect(problems({ ...VALID, measuredOn: "2014-12-31" })).toEqual({ measuredOn: "Choose a date in 2015 or later." });
-    expect(problems({ ...VALID, measuredOn: isoDate(TODAY) })).toEqual({});
+    expect(problems({ ...VALID, measuredOn: TODAY })).toEqual({});
   });
 
   test("reports every problem at once, not one at a time", () => {

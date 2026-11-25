@@ -6,7 +6,7 @@ import { PlanView } from "@/components/plan/PlanView";
 import { findAthlete, requireViewer } from "@/lib/auth/viewer";
 import { loadPlanAccess } from "@/lib/billing/queries";
 import { hasPlanAccess } from "@/lib/billing/subscription";
-import { formatDay } from "@/lib/report/words";
+import { formatDayIn } from "@/lib/dates";
 import { gradeFromGradYear } from "@/lib/grade";
 import { blockPosition, isRetestWeek, weekToShow } from "@/lib/plan/block";
 import { buildPlan } from "@/lib/plan/builder";
@@ -66,7 +66,7 @@ export default async function AthletePlanPage({ params, searchParams }: Props) {
   const plan = buildPlan(library.library, { grade: gradeFromGradYear(athlete.grad_year, today), sports, gaps, screens: screens.answers });
   const answeredLine = (
     <p className="mt-1">
-      Answers from {formatDay(screens.answeredAt.toISOString().slice(0, 10))}.{" "}
+      Answers from {formatDayIn(screens.answeredAt, viewer.timeZone)}.{" "}
       {isParent ? <Link href={`/plan/${athlete.id}/questions`}>Change the answers</Link> : null}
     </p>
   );
@@ -85,7 +85,7 @@ export default async function AthletePlanPage({ params, searchParams }: Props) {
     );
   }
 
-  const position = blockPosition(screens.firstAnsweredAt, today);
+  const position = blockPosition(screens.firstAnsweredAt, today, viewer.timeZone);
   const shownWeek = weekToShow(requestedWeek, position.week);
   const done = await loadCompletions(supabase, athlete.id, position.blockStart);
 

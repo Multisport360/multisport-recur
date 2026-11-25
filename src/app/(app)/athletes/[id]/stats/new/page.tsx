@@ -8,7 +8,8 @@ import { loadBenchmarkSets } from "@/lib/benchmarks/repository";
 import { findSets, listMetrics } from "@/lib/benchmarks/sets";
 import { HOW_MEASURED } from "@/lib/report/build";
 import { listAthleteSports } from "@/lib/report/queries";
-import { HOW_MEASURED_LABELS, isoDate } from "@/lib/stats/rules";
+import { calendarDay } from "@/lib/dates";
+import { HOW_MEASURED_LABELS } from "@/lib/stats/rules";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Enter a number" };
@@ -21,7 +22,7 @@ type Props = {
 export default async function EnterNumberPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { sport: sportId, metric: wantedMetric } = await searchParams;
-  await requireViewer(`/athletes/${id}`);
+  const viewer = await requireViewer(`/athletes/${id}`);
   const athlete = await findAthlete(id);
   if (!athlete) notFound();
 
@@ -49,7 +50,7 @@ export default async function EnterNumberPage({ params, searchParams }: Props) {
         athleteSportId={sport.id}
         metrics={metrics}
         initialMetric={initialMetric}
-        today={isoDate(new Date())}
+        today={calendarDay(new Date(), viewer.timeZone)}
         howMeasured={HOW_MEASURED.map((how) => ({ value: how, label: HOW_MEASURED_LABELS[how] }))}
       />
       <p className="mt-4">

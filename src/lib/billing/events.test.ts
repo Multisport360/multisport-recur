@@ -6,7 +6,8 @@ import { applySubscription, handleStripeEvent, type BillingDeps } from "./events
 
 const FAMILY = "family-1";
 const CUSTOMER = "cus_1";
-const DEC_17_2026 = Date.UTC(2026, 11, 17) / 1000;
+// Noon Eastern, so the date reads the same in UTC and Eastern; the 8 pm cases are tested on their own.
+const DEC_17_2026 = Date.UTC(2026, 11, 17, 17) / 1000;
 
 function subscription(overrides: Partial<Stripe.Subscription> = {}): Stripe.Subscription {
   return {
@@ -50,6 +51,7 @@ function fakeDeps(initial: SubscriptionRow | null = null) {
         if (row) row = { ...row, renewal_reminder_sent_for: periodEnd };
       },
       guardianEmail: async () => "parent@example.com",
+      familyTimeZone: async () => "America/New_York",
     },
     sendEmail: async (email) => {
       sent.push(email);
@@ -70,7 +72,7 @@ describe("signup confirmation", () => {
     const result = await handleStripeEvent(fake.deps, event("checkout.session.completed", { subscription: "sub_1" }));
 
     expect(result.note).toBe("subscription started; email sent");
-    expect(fake.current()).toMatchObject({ family_id: FAMILY, status: "active", current_period_end: "2026-12-17T00:00:00.000Z" });
+    expect(fake.current()).toMatchObject({ family_id: FAMILY, status: "active", current_period_end: "2026-12-17T17:00:00.000Z" });
     expect(fake.sent).toHaveLength(1);
     expect(fake.sent[0]?.subject).toBe("Your Multi-Sport Recur training plan subscription has started");
     expect(fake.sent[0]?.text).toContain("You pay $12 a month. It renews automatically, and the next charge is on December 17, 2026.");
@@ -126,6 +128,14 @@ describe("renewal reminder", () => {
     expect(fake.sent).toHaveLength(1);
     expect(fake.sent[0]?.subject).toBe("Your Multi-Sport Recur training plan renews on December 17, 2026");
     expect(fake.sent[0]?.text).toContain("you'll be charged $12");
+  });
+
+  test("a period ending 8 pm Eastern on Dec 17 (1 am UTC Dec 18) is dated Dec 17 for an Eastern family", async () => {
+    const eightPmEastern = Date.UTC(2026, 11, 18, 1) / 1000;
+    const late = subscription({ items: { data: [{ current_period_end: eightPmEastern, price: { unit_amount: 1200, recurring: { interval: "month" } } }] } } as never);
+    await applySubscription(fake.deps, FAMILY, CUSTOMER, late);
+    await handleStripeEvent(fake.deps, event("invoice.upcoming", { customer: CUSTOMER, amount_due: 1200 }));
+    expect(fake.sent.at(-1)?.subject).toBe("Your Multi-Sport Recur training plan renews on December 17, 2026");
   });
 
   test("no reminder for a plan that is set to cancel", async () => {

@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { timeZoneOrDefault } from "@/lib/dates";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/send";
 import { stripeEnv } from "@/lib/env";
@@ -39,6 +40,11 @@ export function billingStore(): BillingStore {
     async markReminderSent(familyId, periodEnd) {
       const { error } = await admin.from("subscriptions").update({ renewal_reminder_sent_for: periodEnd }).eq("family_id", familyId);
       if (error) throw new Error(`Could not record the reminder: ${error.message}`);
+    },
+    async familyTimeZone(familyId) {
+      const family = await admin.from("families").select("timezone").eq("id", familyId).maybeSingle();
+      if (family.error) console.error(`[billing] could not read the family time zone: ${family.error.message}`);
+      return timeZoneOrDefault(family.data?.timezone);
     },
     async guardianEmail(familyId) {
       const guardian = await admin.from("guardians").select("user_id").eq("family_id", familyId).order("created_at").limit(1).maybeSingle();

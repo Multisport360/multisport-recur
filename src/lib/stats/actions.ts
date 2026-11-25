@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { loadBenchmarkSets } from "@/lib/benchmarks/repository";
 import { GENDERS, type Gender } from "@/lib/benchmarks/types";
 import { findAthlete, requireViewer } from "@/lib/auth/viewer";
+import { calendarDay } from "@/lib/dates";
 import { failed, fieldErrors, formValues, type FormState } from "@/lib/forms";
 import { listAthleteSports } from "@/lib/report/queries";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -20,11 +21,11 @@ const UNIQUE_VIOLATION = "23505";
 const BENCHMARKS_DOWN = "The benchmarks can't be loaded right now, so nothing was saved. Try again in a few minutes.";
 
 async function athleteFor(athleteId: string) {
-  await requireViewer(`/athletes/${athleteId}`);
+  const viewer = await requireViewer(`/athletes/${athleteId}`);
   const athlete = await findAthlete(athleteId);
   if (!athlete) redirect("/athletes");
   if (!(GENDERS as readonly string[]).includes(athlete.gender)) throw new Error(`Athlete ${athleteId} has an unknown gender value.`);
-  return { ...athlete, gender: athlete.gender as Gender };
+  return { ...athlete, gender: athlete.gender as Gender, timeZone: viewer.timeZone };
 }
 
 export async function addSport(athleteId: string, _previous: FormState, form: FormData): Promise<FormState> {
@@ -66,7 +67,7 @@ export async function addStat(athleteId: string, athleteSportId: string, _previo
     sport: sport.sport,
     positionOrEvent: sport.positionOrEvent,
     gender: athlete.gender,
-    today: new Date(),
+    today: calendarDay(new Date(), athlete.timeZone),
   }).safeParse(values);
   if (!parsed.success) return { message: null, fields: fieldErrors(parsed.error), values };
 

@@ -19,7 +19,7 @@ export default async function SubscribePage({ searchParams }: Props) {
   if (hasPlanAccess(access)) redirect("/plan");
 
   const { checkout } = await searchParams;
-  const terms = checkoutTerms(new Date());
+  const terms = checkoutTerms(new Date(), viewer.timeZone);
 
   return (
     <div className="max-w-80">

@@ -140,6 +140,7 @@ Plans are built by plain TypeScript in `src/lib/plan/` (no AI) from one template
   where version = 'draft-2026-11-17';
   ```
   The database refuses `approved` without a reviewer and a date.
+- Each family has a `timezone` (IANA name from the parent's browser at sign-up; America/New_York for families made before). Dates shown in the app and emails, today's date on the stat form, and the Monday each 6-week block starts all use it. Code: `src/lib/dates.ts`.
 - `plan_screen_answers` keeps every set of answers to the 4 plan questions (the newest counts). `plan_session_completions` keeps the "Mark this session done" ticks.
 - `src/lib/plan/metric-map.ts` links each benchmark metric to the template's stat names; a unit test fails if a metric in `data/benchmarks.csv` has no mapping.
 

@@ -43,7 +43,7 @@ export default async function AccountPage({ searchParams }: Props) {
               {CANCEL_PROBLEMS[cancelProblem]}
             </p>
           ) : null}
-          <BillingStatus access={access} />
+          <BillingStatus access={access} timeZone={viewer.timeZone} />
         </section>
       ) : null}
 
@@ -56,20 +56,20 @@ export default async function AccountPage({ searchParams }: Props) {
   );
 }
 
-function BillingStatus({ access }: { access: PlanAccess }) {
+function BillingStatus({ access, timeZone }: { access: PlanAccess; timeZone: string }) {
   switch (access.state) {
     case "active":
       return (
         <>
           <p className="mt-1">
             Subscribed: {priceWithInterval()}.{" "}
-            {access.renewsOn ? `Renews on ${formatLongDate(access.renewsOn)}.` : "Renews automatically."}
+            {access.renewsOn ? `Renews on ${formatLongDate(access.renewsOn, timeZone)}.` : "Renews automatically."}
           </p>
           {/* Cancel is two clicks: open this, then confirm. */}
           <details className="mt-2">
             <summary className="py-1.5 text-track-blue underline underline-offset-4">Cancel my training plan</summary>
             <p className="mt-1 mb-2">
-              You keep the plan until {access.renewsOn ? formatLongDate(access.renewsOn) : "the end of the month you've paid for"},
+              You keep the plan until {access.renewsOn ? formatLongDate(access.renewsOn, timeZone) : "the end of the month you've paid for"},
               then it stops. You won&apos;t be charged again.
             </p>
             <form action={cancelSubscription}>
@@ -83,7 +83,7 @@ function BillingStatus({ access }: { access: PlanAccess }) {
     case "ending":
       return (
         <p className="mt-1">
-          Cancelled. You keep the plan until {access.endsOn ? formatLongDate(access.endsOn) : "the end of the paid month"}, and
+          Cancelled. You keep the plan until {access.endsOn ? formatLongDate(access.endsOn, timeZone) : "the end of the paid month"}, and
           you won&apos;t be charged again.
         </p>
       );
