@@ -16,7 +16,6 @@ import {
   THROWING_CAUTION,
   THROWING_CAUTION_BELOW_GRADE,
   THROWING_ITEMS,
-  teamSessionsText,
 } from "./rules.ts";
 import { layOutWeek, type RunPlan, type StrengthDayPlan } from "./schedule.ts";
 import { chooseModules, chooseTier, notTrainableMessages } from "./select.ts";
@@ -201,16 +200,10 @@ function safetyNotes(ctx: Omit<Context, "week">, grade: number, weeks: readonly 
   return [PAIN_LINE, ...caution, ...new Set(moduleNotes)];
 }
 
-/** Shown when the team's practices and games already use every hard day the tier allows. */
-export function teamScheduleFullMessage(tier: TierId, teamSessionsPerWeek: number): string {
-  return `With ${teamSessionsText(teamSessionsPerWeek)} a week, the team schedule already uses all ${HARD_DAY_LIMIT[tier]} hard days this plan allows. The plan adds no strength, sprint or throwing days on top; anything left is easy work.`;
-}
-
-function screenMessages(library: TemplateLibrary, input: PlanInput, phase: SeasonPhase, tier: TierId, teamSessionsPerWeek: number): string[] {
+function screenMessages(library: TemplateLibrary, input: PlanInput, phase: SeasonPhase): string[] {
   return [
     ...(input.screens.throwingArmPain === true ? [screenMessage(library, "throwing_arm_pain")] : []),
     ...(phase === "rest_period" ? [library.season_phases.rest_period] : []),
-    ...(planHardDayBudget(tier, teamSessionsPerWeek) === 0 ? [teamScheduleFullMessage(tier, teamSessionsPerWeek)] : []),
   ];
 }
 
@@ -253,9 +246,10 @@ export function buildPlan(library: TemplateLibrary, input: PlanInput): PlanResul
     modules,
     weeks,
     safetyNotes: safetyNotes(base, input.grade, weeks),
-    messages: [...screenMessages(library, input, phase, tier, teamSessionsPerWeek), ...notTrainableMessages(library, input.gaps)],
+    messages: [...screenMessages(library, input, phase), ...notTrainableMessages(library, input.gaps)],
     hardDayLimit: HARD_DAY_LIMIT[tier],
     teamSessionsPerWeek,
+    teamScheduleFull: planHardDayBudget(tier, teamSessionsPerWeek) === 0,
     leftOut: [...new Set(built.flatMap((result) => result.leftOut))],
   };
   return plan;

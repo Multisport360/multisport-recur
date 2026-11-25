@@ -88,6 +88,9 @@ async function main() {
   const full = await createFamilyWithoutSignIn(admin, "shots-full");
   const older = await addAthleteAsAdmin(admin, full, "Riley", new Date().getFullYear() - 15);
   const younger = await addAthleteAsAdmin(admin, full, "Jamie", new Date().getFullYear() - 12);
+  // Cole: a Development pitcher whose 5 team practices and games fill every hard day.
+  const busy = await addAthleteAsAdmin(admin, full, "Cole", new Date().getFullYear() - 15);
+  await admin.from("athlete_sports").insert({ athlete_id: busy.athleteId, sport: "Baseball", position_or_event: "Pitcher" });
   // An unused consent, so the add-athlete form shows instead of the consent page.
   await admin.from("consents").insert({ family_id: full.familyId, guardian_id: full.guardianId, consent_version: "2026-11-draft-1", method: "checkbox_attestation" });
   // A two-sport report with history, and a subscription so the plan pages show their paid state.
@@ -109,6 +112,7 @@ async function main() {
     stat("60-yard dash", 7.05, "sec", "2026-10-02"),
     stat("40-yard dash", 4.85, "sec", "2026-09-12", "Football"),
     stat("Height", 73, "in", "2026-09-12", "Football"),
+    { ...stat("Fastball velocity", 80, "mph", "2026-10-02"), athlete_id: busy.athleteId },
   ]);
   await admin.from("subscriptions").insert({
     family_id: full.familyId,
@@ -129,6 +133,14 @@ async function main() {
     has_training_age: true,
     season_phase: "off_season",
     team_sessions_per_week: 2,
+  });
+  await admin.from("plan_screen_answers").insert({
+    athlete_id: busy.athleteId,
+    pain_now: false,
+    throwing_arm_pain: false,
+    has_training_age: true,
+    season_phase: "off_season",
+    team_sessions_per_week: 5,
   });
 
   const browser = await chromium.launch();
@@ -168,6 +180,8 @@ async function main() {
         },
         { name: "plan-subscribed", path: "/plan" },
         { name: "plan-athlete", path: `/plan/${older.athleteId}` },
+        { name: "plan-athlete-week-2", path: `/plan/${older.athleteId}?week=2` },
+        { name: "plan-team-full", path: `/plan/${busy.athleteId}` },
         { name: "plan-questions-first", path: `/plan/${younger.athleteId}/questions` },
         { name: "plan-questions-change", path: `/plan/${older.athleteId}/questions` },
         { name: "account-subscribed", path: "/account" },

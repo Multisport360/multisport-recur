@@ -20,6 +20,15 @@ export function teamSessionsText(count: number): string {
   return count === 1 ? "1 team practice or game" : `${count} team practices or games`;
 }
 
+/**
+ * Shown in place of an empty week when the team's practices and games use every hard day the
+ * tier allows. Never a silent blank week.
+ */
+export function teamScheduleFullText(count: number, firstName: string): string {
+  const howMany = count >= MAX_TEAM_SESSIONS ? `${MAX_TEAM_SESSIONS} or more` : String(count);
+  return `With ${howMany} practices and games a week, ${firstName} has no room for extra hard training days. Talk to the coach about swapping a practice for a strength session.`;
+}
+
 /** How many hard days the plan itself may add once the team's practices and games are counted. */
 export function planHardDayBudget(tier: TierId, teamSessionsPerWeek: number): number {
   return Math.max(0, HARD_DAY_LIMIT[tier] - teamSessionsPerWeek);

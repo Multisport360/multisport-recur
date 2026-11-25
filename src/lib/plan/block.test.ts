@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { blockPosition, isRetestWeek, weekToShow } from "./block";
+import { blockPosition, isRetestWeek, weekStatus, weekToShow } from "./block";
 
 // Wednesday 4 November 2026 (10 am Eastern). Its Monday is 2 November.
 const ANSWERED = new Date("2026-11-04T15:00:00Z");
@@ -47,6 +47,26 @@ test("weeks stay 7 days long across the clocks going back on Nov 1", () => {
   const answered = new Date("2026-10-26T16:00:00Z"); // Monday Oct 26, noon Eastern summer time
   expect(blockPosition(answered, new Date("2026-11-02T05:30:00Z"), EASTERN)).toMatchObject({ week: 2, dayIndex: 0 });
   expect(blockPosition(answered, new Date("2026-11-02T04:30:00Z"), EASTERN)).toMatchObject({ week: 1, dayIndex: 6 });
+});
+
+describe("weekStatus: the line under the week heading always names the week being shown", () => {
+  test("the current week", () => {
+    expect(weekStatus(1, 1)).toEqual({ text: "This is week 1, the current week.", isCurrent: true });
+  });
+
+  test("looking ahead: week 2 shown while the block is on week 1 (the mismatch on localhost)", () => {
+    expect(weekStatus(2, 1)).toEqual({ text: "This is week 2. The block is on week 1 now.", isCurrent: false });
+  });
+
+  test("looking back", () => {
+    expect(weekStatus(3, 5)).toEqual({ text: "This is week 3. The block is on week 5 now.", isCurrent: false });
+  });
+
+  test("whatever week is shown, the line starts with that week's number", () => {
+    for (let current = 1; current <= 6; current += 1) {
+      for (let shown = 1; shown <= 6; shown += 1) expect(weekStatus(shown, current).text.startsWith(`This is week ${shown}`)).toBe(true);
+    }
+  });
 });
 
 test("week 6 is the retest week", () => {

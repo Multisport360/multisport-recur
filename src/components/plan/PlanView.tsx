@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatValue, metricInSentence } from "@/lib/benchmarks/format";
-import { teamSessionsText } from "@/lib/plan/rules";
+import { weekStatus } from "@/lib/plan/block";
+import { teamScheduleFullText, teamSessionsText } from "@/lib/plan/rules";
 import { DAY_NAMES } from "@/lib/plan/schedule";
 import { sessionKey } from "@/lib/plan/queries";
 import type { BuiltPlan, PlanItem, PlanWeek, Session } from "@/lib/plan/types";
@@ -31,7 +32,8 @@ export function PlanView(props: Props) {
       <FocusSummary {...props} />
       {props.isRetestWeek ? <RetestPrompt {...props} /> : null}
       <WeekNav {...props} />
-      <WeekTable week={week} done={props.done} />
+      {/* A week with no sessions shows the reason above (team schedule full), never seven silent rest days. */}
+      {week.days.some((day) => day.session) ? <WeekTable week={week} done={props.done} /> : null}
       {week.days.map((day) =>
         day.session ? (
           <DayDetail key={day.day} {...props} week={week} day={day.day} session={day.session} />
@@ -125,16 +127,28 @@ function RetestPrompt({ plan, athleteId, sports }: Props) {
   );
 }
 
-function WeekNav({ plan, athleteId, currentWeek, shownWeek, done }: Props) {
+function WeekNav({ plan, athleteId, firstName, currentWeek, shownWeek, done }: Props) {
   const total = plan.weeks.reduce((count, week) => count + week.days.filter((day) => day.session).length, 0);
+  const status = weekStatus(shownWeek, currentWeek);
   return (
     <section className={SECTION} aria-labelledby="week-heading">
       <h2 id="week-heading" className="text-[2.25rem] tabular-nums">
         Week {shownWeek} of {plan.weeks.length}
       </h2>
-      <p data-testid="completed-count" className="mt-1 tabular-nums">
-        {done.size} of {total} sessions done in this 6-week block. This is week {currentWeek}.
+      {plan.teamScheduleFull ? (
+        <p data-testid="team-schedule-full" role="status" className="mt-1 border-l-4 border-infield-navy pl-2 text-[1.25rem] font-bold">
+          {teamScheduleFullText(plan.teamSessionsPerWeek, firstName)}
+        </p>
+      ) : null}
+      <p data-testid="week-status" className="mt-1 tabular-nums">
+        {status.text}{" "}
+        {status.isCurrent ? null : <Link href={`/plan/${athleteId}?week=${currentWeek}`}>Go to week {currentWeek}</Link>}
       </p>
+      {total > 0 ? (
+        <p data-testid="completed-count" className="mt-1 tabular-nums">
+          {done.size} of {total} sessions done in this 6-week block.
+        </p>
+      ) : null}
       <nav aria-label="Weeks in this block" className="mt-1">
         <ul className="flex flex-wrap gap-x-2">
           {plan.weeks.map((week) => (
@@ -145,6 +159,7 @@ function WeekNav({ plan, athleteId, currentWeek, shownWeek, done }: Props) {
                 className={`inline-flex min-h-6 items-center tabular-nums ${week.week === shownWeek ? "font-bold text-infield-navy no-underline" : ""}`}
               >
                 Week {week.week}
+                {week.week === currentWeek ? " (now)" : ""}
               </Link>
             </li>
           ))}
@@ -241,7 +256,8 @@ function HowItWorks({ plan }: { plan: BuiltPlan }) {
           practice time rather than piling on top of a full sport schedule.
         </li>
       </ul>
-      {plan.leftOut.length > 0 ? (
+      {/* When the team schedule is full, the message above the week already says why everything is left out. */}
+      {plan.leftOut.length > 0 && !plan.teamScheduleFull ? (
         <ul className="mt-1 space-y-0.5">
           {plan.leftOut.map((line) => (
             <li key={line}>{line}</li>

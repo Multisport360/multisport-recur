@@ -93,6 +93,8 @@ export type BuiltPlan = {
   hardDayLimit: number;
   /** Team practices or games a week, counted toward hardDayLimit. */
   teamSessionsPerWeek: number;
+  /** The team uses every hard day the tier allows, so the plan adds none (see teamScheduleFullText). */
+  teamScheduleFull: boolean;
   /** Work the schedule could not fit without breaking a rule, in plain words. */
   leftOut: string[];
 };

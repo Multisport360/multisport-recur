@@ -276,10 +276,73 @@ test("answers saved before the team-practice question ask for it; a full team we
     await page.getByRole("group", { name: /team practices or games/ }).getByLabel("5").check();
     await page.getByRole("button", { name: "Save and update the plan" }).click();
 
-    await expect(page.getByTestId("plan-messages")).toContainText("With 5 team practices or games a week, the team schedule already uses all 4 hard days this plan allows.");
+    await expect(page.getByTestId("team-schedule-full")).toHaveText(
+      "With 5 practices and games a week, Sam has no room for extra hard training days. Talk to the coach about swapping a practice for a strength session.",
+    );
     await expect(page.getByTestId("plan-day").getByRole("heading", { level: 3, name: /Strength|Throwing/i })).toHaveCount(0);
-    await expect(page.getByTestId("plan")).toContainText("Strength A was left out to stay within 4 hard days a week, counting 5 team practices or games.");
+    // The one message replaces a list of every strength and throwing day left out.
+    await expect(page.getByTestId("plan")).not.toContainText("was left out");
     await expect(page.getByTestId("hard-day-limit")).toContainText("counting 5 team practices or games");
+  } finally {
+    await removeApproved();
+  }
+});
+
+test("a full team week never shows a silent blank week (Development pitcher, off-season, 5 practices)", async ({ page, admin, newParent }) => {
+  test.setTimeout(90_000);
+  const removeApproved = await addApprovedLibrary(admin);
+  try {
+    const family = await newParent("plans-full-week");
+    const athleteId = await ninthGradePitcher(admin, family);
+    await subscribe(admin, family);
+    await answerScreens(admin, athleteId, { throwing_arm_pain: false, has_training_age: true, season_phase: "off_season", team_sessions_per_week: 5 });
+    await signIn(page, family.user);
+
+    await page.goto(`/plan/${athleteId}`);
+    await expect(page.getByText("Development level.")).toBeVisible();
+    await expect(page.getByTestId("team-schedule-full")).toHaveText(
+      "With 5 practices and games a week, Sam has no room for extra hard training days. Talk to the coach about swapping a practice for a strength session.",
+    );
+    // No table of seven rest days, and no "0 of 0 sessions done".
+    await expect(page.getByTestId("week-table")).toHaveCount(0);
+    await expect(page.getByText("Rest day", { exact: true })).toHaveCount(0);
+    await expect(page.getByTestId("completed-count")).toHaveCount(0);
+  } finally {
+    await removeApproved();
+  }
+});
+
+test("the week heading, the highlighted tab and the week line always name the same week", async ({ page, admin, newParent }) => {
+  test.setTimeout(90_000);
+  const removeApproved = await addApprovedLibrary(admin);
+  try {
+    const family = await newParent("plans-weeks");
+    const athleteId = await ninthGradePitcher(admin, family);
+    await subscribe(admin, family);
+    // Answered today, so the block is on week 1.
+    await answerScreens(admin, athleteId, { throwing_arm_pain: false });
+    await signIn(page, family.user);
+    await page.goto(`/plan/${athleteId}`);
+
+    const weeks = page.getByRole("navigation", { name: "Weeks in this block" });
+    const expectShowing = async (shown: number) => {
+      await expect(page.getByRole("heading", { level: 2, name: `Week ${shown} of 6` })).toBeVisible();
+      await expect(weeks.locator("[aria-current=page]")).toHaveText(new RegExp(`^Week ${shown}( \\(now\\))?$`));
+      await expect(page.getByTestId("week-status")).toContainText(`This is week ${shown}`);
+      await expect(page.getByTestId("week-table").locator("caption")).toHaveText(`Week ${shown}, day by day`);
+    };
+
+    await expectShowing(1);
+    await expect(page.getByTestId("week-status")).toHaveText("This is week 1, the current week.");
+    await expect(weeks.getByRole("link", { name: "Week 1 (now)" })).toBeVisible();
+
+    // The mismatch seen on localhost: "Week 2 of 6" above "This is week 1".
+    await weeks.getByRole("link", { name: "Week 2", exact: true }).click();
+    await expectShowing(2);
+    await expect(page.getByTestId("week-status")).toHaveText("This is week 2. The block is on week 1 now. Go to week 1");
+
+    await page.getByRole("link", { name: "Go to week 1" }).click();
+    await expectShowing(1);
   } finally {
     await removeApproved();
   }

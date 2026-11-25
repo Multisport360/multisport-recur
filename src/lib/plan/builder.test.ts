@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { buildPlan, teamScheduleFullMessage } from "./builder";
+import { buildPlan } from "./builder";
 import { MODULE_IDS, SEASON_PHASES, type ModuleId, type SeasonPhase } from "./library-schema";
-import { ADDED_THROWING_VOLUME, HARD_DAY_LIMIT, INTERVAL_THROWING, MAX_TEAM_SESSIONS, PAIN_LINE, THROWING_CAUTION, THROWING_ITEMS } from "./rules";
+import { ADDED_THROWING_VOLUME, HARD_DAY_LIMIT, INTERVAL_THROWING, MAX_TEAM_SESSIONS, PAIN_LINE, teamScheduleFullText, THROWING_CAUTION, THROWING_ITEMS } from "./rules";
 import { MAX_FOCUS_MODULES } from "./select";
 import { draftLibrary, gap, screens } from "./test-library";
 import type { AthleteSportRef, BuiltPlan, PlanInput, PlanWeek, StatGap } from "./types";
@@ -213,7 +213,7 @@ describe("the team_sessions screen: practices and games count toward the hard-da
   test("when the team uses every hard day, the plan adds none and says why", () => {
     const p = plan({ screens: screens({ teamSessionsPerWeek: 4 }) });
     for (const week of p.weeks) expect(hardDays(week)).toBe(0);
-    expect(p.messages).toContain("With 4 team practices or games a week, the team schedule already uses all 4 hard days this plan allows. The plan adds no strength, sprint or throwing days on top; anything left is easy work.");
+    expect(p.teamScheduleFull).toBe(true);
     expect(p.leftOut).toContain("Strength A was left out to stay within 4 hard days a week, counting 4 team practices or games.");
   });
 
@@ -237,8 +237,24 @@ describe("the team_sessions screen: practices and games count toward the hard-da
     expect(plan({ screens: screens({ teamSessionsPerWeek: 2.7 }) }).teamSessionsPerWeek).toBe(2);
   });
 
-  test("the full-week message names the tier's limit", () => {
-    expect(teamScheduleFullMessage("development", 7)).toMatch(/^With 7 team practices or games a week, the team schedule already uses all 5 hard days/);
+  test("reproduces the blank week: a Development pitcher, off-season, 5 practices gets no sessions, and the plan says the team schedule is full", () => {
+    // Cole's saved answers on localhost: 10th grade, a year of coached training, off-season, 5 team practices or games.
+    const p = plan({ grade: 10, screens: screens({ hasTrainingAge: true, throwingArmPain: false, seasonPhase: "off_season", teamSessionsPerWeek: 5 }) });
+    expect(p.tier).toBe("development");
+    for (const week of p.weeks) expect(week.days.every((day) => day.session === null)).toBe(true);
+    expect(p.teamScheduleFull).toBe(true);
+  });
+
+  test("one practice short of the limit is not full", () => {
+    expect(plan({ grade: 10, screens: screens({ hasTrainingAge: true, teamSessionsPerWeek: 4 }) }).teamScheduleFull).toBe(false);
+    expect(plan({ screens: screens({ teamSessionsPerWeek: 0 }) }).teamScheduleFull).toBe(false);
+  });
+
+  test("the full-schedule message names the count and the athlete, and suggests the swap", () => {
+    expect(teamScheduleFullText(5, "Cole")).toBe(
+      "With 5 practices and games a week, Cole has no room for extra hard training days. Talk to the coach about swapping a practice for a strength session.",
+    );
+    expect(teamScheduleFullText(MAX_TEAM_SESSIONS, "Cole")).toMatch(/^With 7 or more practices and games a week, Cole has/);
   });
 });
 
@@ -354,6 +370,8 @@ describe("the rules hold for every combination", () => {
               screens: screens({ hasTrainingAge, seasonPhase, throwingArmPain, teamSessionsPerWeek }),
             });
             expectRulesHold(p);
+            // Never a silent blank week: a week with no sessions only happens when the team schedule is full, which the plan says.
+            if (p.weeks.some((week) => week.days.every((day) => day.session === null))) expect(p.teamScheduleFull).toBe(true);
             if (throwingArmPain || p.seasonPhase === "rest_period") for (const name of THROWING_ITEMS) expect(itemNames(p)).not.toContain(name);
           }
         }

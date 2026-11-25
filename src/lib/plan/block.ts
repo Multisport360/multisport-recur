@@ -58,6 +58,15 @@ export function isRetestWeek(week: number): boolean {
   return week === WEEKS_PER_BLOCK;
 }
 
+/**
+ * The line under "Week N of 6". It always starts with the week being shown, so it agrees with
+ * the heading and the highlighted tab; when that isn't the calendar week, it says which one is.
+ */
+export function weekStatus(shownWeek: number, currentWeek: number): { text: string; isCurrent: boolean } {
+  if (shownWeek === currentWeek) return { text: `This is week ${shownWeek}, the current week.`, isCurrent: true };
+  return { text: `This is week ${shownWeek}. The block is on week ${currentWeek} now.`, isCurrent: false };
+}
+
 /** A week number from the address bar, or the current week when it is missing or not 1 to 6. */
 export function weekToShow(requested: string | undefined, currentWeek: number): number {
   const week = Number(requested);
