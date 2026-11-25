@@ -1,19 +1,15 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { areTipsEnabled, wordTips } from "./tips";
-import type { PlanTemplate } from "./templates";
+import { buildPlan } from "./builder";
+import { draftLibrary, gap, screens } from "./test-library";
+import type { BuiltPlan } from "./types";
 
-const TEMPLATE: PlanTemplate = {
-  id: "t1",
-  sport: "Baseball",
-  positionOrEvent: "Pitcher",
-  metric: null,
-  minGrade: 8,
-  maxGrade: 12,
-  title: "Plan",
-  summary: "",
-  sections: [{ heading: "Week 1", items: ["Long toss"] }],
-  safetyNotes: "Warm up.",
-};
+const TEMPLATE = buildPlan(draftLibrary(), {
+  grade: 10,
+  sports: [{ sport: "Baseball", positionOrEvent: "Pitcher" }],
+  gaps: [gap("Fastball velocity", 0.05)],
+  screens: screens(),
+}) as BuiltPlan;
 
 afterEach(() => {
   vi.unstubAllEnvs();
