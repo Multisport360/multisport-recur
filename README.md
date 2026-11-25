@@ -123,11 +123,31 @@ Events the webhook handles: `checkout.session.completed`, `customer.subscription
 5. Run `npm run db:push` and `npm run db:seed` once against the production Supabase project (with that project's keys in `.env.local`).
 6. Run the end-to-end tests against a preview deployment if you like: `E2E_BASE_URL=https://your-preview.vercel.app npm run test:e2e`.
 
+## Training plans
+
+Plans are built by plain TypeScript in `src/lib/plan/` (no AI) from one template library: `data/plan_templates.draft.json`, stored as one row of `plan_templates` (`content` holds the JSON).
+
+| Command | What it does |
+| --- | --- |
+| `npm run plans:check` | Checks the JSON file and lists every problem. Changes nothing. |
+| `npm run plans:seed` | Checks the file, then saves it to `plan_templates` as a **draft**. |
+
+- **Families only ever see an approved library.** Drafts are read only when `ALLOW_DRAFT_PLANS=true` **and** the app runs with `npm run dev`. Any `npm run build` (Vercel included) ignores drafts, even with the flag set. Draft pages carry the banner "Sample plan, not coach-reviewed. For testing only."
+- **Going live** after the coach signs off, in the Supabase SQL editor:
+  ```sql
+  update plan_templates
+  set review_status = 'approved', reviewed_by = 'Coach name, CSCS', reviewed_on = '2026-12-01'
+  where version = 'draft-2026-11-17';
+  ```
+  The database refuses `approved` without a reviewer and a date.
+- `plan_screen_answers` keeps every set of answers to the 4 plan questions (the newest counts). `plan_session_completions` keeps the "Mark this session done" ticks.
+- `src/lib/plan/metric-map.ts` links each benchmark metric to the template's stat names; a unit test fails if a metric in `data/benchmarks.csv` has no mapping.
+
 ## Decisions still open (placeholders in the code)
 
 | Decision | Where it lives now |
 | --- | --- |
 | COPPA verifiable parental consent method | `src/config/consent.ts` and `src/lib/consent/methods.ts`. Today: a two-checkbox attestation, which is **not** a verified method for children under 13. Add a method, then set `CONSENT_METHOD`. Bump `CONSENT_VERSION` when the wording changes. |
 | Training plan price and interval | `src/config/billing.ts`: **$12 a month is a placeholder.** |
-| Coach-reviewed plan templates | `plan_templates` table. Insert with `is_published = true` only after a coach has reviewed it (`reviewed_by`, `reviewed_at` are required). Until then, every subscriber sees "Your plan is coming". |
+| Coach-reviewed plan templates | See "Training plans" below. Until a template library is approved, every subscriber sees "Your plan is coming". |
 | Benchmark data gaps | `npm run db:check` lists rows that look wrong. Benchmark values are only changed in `data/benchmarks.csv`. |

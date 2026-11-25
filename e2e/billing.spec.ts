@@ -1,9 +1,10 @@
 import type { Page } from "@playwright/test";
-import { addAthleteAsAdmin, type Client } from "../tests/db/helpers";
-import { expect, signIn, test, THIS_YEAR, type E2eFamily } from "./support/accounts";
+import type { Client } from "../tests/db/helpers";
+import { expect, signIn, test, type E2eFamily } from "./support/accounts";
 
 /**
- * M6: the paid training plan. Runs against the real database. Stripe calls only happen
+ * M6: the paid training plan's billing. Runs against the real database. What a subscriber sees
+ * on the plan page is in plans.spec.ts. Stripe calls only happen
  * when STRIPE_SECRET_KEY is set; without it the pages must say payments are off.
  */
 
@@ -22,13 +23,6 @@ async function subscribe(admin: Client, family: E2eFamily) {
     current_period_end: new Date(Date.now() + ONE_MONTH_MS).toISOString(),
   });
   if (result.error) throw new Error(`could not add subscription: ${result.error.message}`);
-}
-
-async function athleteWithSport(admin: Client, family: E2eFamily, sport: string, position: string, birthYear = THIS_YEAR - 15) {
-  const { athleteId } = await addAthleteAsAdmin(admin, family, "Sam", birthYear);
-  const added = await admin.from("athlete_sports").insert({ athlete_id: athleteId, sport, position_or_event: position });
-  if (added.error) throw new Error(`could not add sport: ${added.error.message}`);
-  return athleteId;
 }
 
 async function openSubscribe(page: Page, family: E2eFamily) {
@@ -75,56 +69,6 @@ test("after agreeing, the parent goes to Stripe Checkout, or is told payments ar
     await expect(page.getByRole("main").getByRole("alert")).toHaveText(
       "Payments aren't switched on yet, so you can't subscribe right now. Nothing was charged.",
     );
-  }
-});
-
-test("a subscriber with no coach-reviewed template sees 'your plan is coming', never a made-up plan", async ({ page, admin, newParent }) => {
-  const family = await newParent("billing-coming");
-  await athleteWithSport(admin, family, "Track & Field", "100m");
-  await subscribe(admin, family);
-  await signIn(page, family.user);
-
-  await page.goto("/plan");
-  await expect(page.getByTestId("plan-coming")).toContainText("Your plan is coming.");
-  await expect(page.getByTestId("plan-template")).toHaveCount(0);
-});
-
-test("a published template is shown as written, with safety notes and extra throwing caution for younger athletes", async ({ page, admin, newParent }) => {
-  const family = await newParent("billing-template");
-  const athleteId = await athleteWithSport(admin, family, "Baseball", "Pitcher", THIS_YEAR - 15);
-  // 9th grade this school year (younger than 11th), so the extra throwing caution applies.
-  const ninthGradeClass = new Date().getMonth() >= 7 ? THIS_YEAR + 4 : THIS_YEAR + 3;
-  await admin.from("athletes").update({ grad_year: ninthGradeClass }).eq("id", athleteId);
-  await subscribe(admin, family);
-  const template = await admin
-    .from("plan_templates")
-    .insert({
-      sport: "Baseball",
-      position_or_event: "Pitcher",
-      metric: "Fastball velocity",
-      title: "E2E test plan: velocity base",
-      body: [{ heading: "Week 1", items: ["E2E item one"] }],
-      safety_notes: "E2E safety note.",
-      reviewed_by: "E2E coach",
-      reviewed_at: new Date().toISOString(),
-      is_published: true,
-    })
-    .select("id")
-    .single();
-  if (template.error) throw new Error(template.error.message);
-
-  try {
-    await signIn(page, family.user);
-    await page.goto("/plan");
-    const plan = page.getByTestId("plan-template");
-    await expect(plan).toContainText("E2E test plan: velocity base");
-    await expect(plan).toContainText("E2E item one");
-    await expect(plan.getByTestId("safety-notes")).toContainText("E2E safety note.");
-    await expect(plan.getByTestId("safety-notes")).toContainText("Extra caution for younger throwers");
-    // The AI tips flag is off by default, so no tips are shown.
-    await expect(plan.getByText("Tips are worded by AI")).toHaveCount(0);
-  } finally {
-    await admin.from("plan_templates").delete().eq("id", template.data.id);
   }
 });
 

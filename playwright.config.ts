@@ -8,6 +8,9 @@ try {
 }
 
 const PORT = 3100;
+// A second, `next dev` server for the one test that must see draft (not coach-reviewed) plans.
+const DEV_PORT = 3102;
+process.env.E2E_DEV_PORT = String(DEV_PORT);
 // Set E2E_BASE_URL to test a server that is already running (for example a Vercel preview).
 const EXTERNAL_URL = process.env.E2E_BASE_URL;
 const BASE_URL = EXTERNAL_URL ?? `http://localhost:${PORT}`;
@@ -31,15 +34,27 @@ export default defineConfig({
       // These sign real test users in and out through Supabase Auth, which limits sign-ins
       // per IP. The server logic is the same at every width, so they run once, on desktop.
       // Phone layout of the signed-in pages is checked by the screenshot and axe review.
-      testIgnore: /(a11y-signed-in|auth|billing|family|report|sends-email)\.spec\.ts/,
+      testIgnore: /(a11y-signed-in|auth|billing|family|plans|report|sends-email)\.spec\.ts/,
     },
   ],
   webServer: EXTERNAL_URL
     ? undefined
-    : {
-        command: `npm run build && npm run start -- -p ${PORT}`,
-        url: BASE_URL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 180_000,
-      },
+    : [
+        {
+          // ALLOW_DRAFT_PLANS is set on purpose: plans.spec.ts proves a production build ignores it.
+          command: `npm run build && npm run start -- -p ${PORT}`,
+          url: BASE_URL,
+          env: { ALLOW_DRAFT_PLANS: "true" },
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+        {
+          // Local development with drafts allowed. Stripe sends the browser back to this server.
+          command: `npx next dev -p ${DEV_PORT}`,
+          url: `http://localhost:${DEV_PORT}`,
+          env: { ALLOW_DRAFT_PLANS: "true", NEXT_PUBLIC_SITE_URL: `http://localhost:${DEV_PORT}` },
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
+      ],
 });

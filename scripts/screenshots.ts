@@ -4,6 +4,10 @@
  *   npm run build && npm run start -- -p 3101     (in one terminal)
  *   npm run screenshots -- http://localhost:3101  (in another)
  *
+ * A production build never shows draft plans, so to see the plan pages with the draft library:
+ *   ALLOW_DRAFT_PLANS=true npx next dev -p 3102
+ *   npm run screenshots -- http://localhost:3102
+ *
  * Pictures go to screenshots/ (not committed). Signed-in pages use a throwaway parent
  * account made with the service role, and it is deleted at the end.
  */
@@ -116,6 +120,16 @@ async function main() {
     current_period_end: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
   });
 
+  // Riley has answered the plan questions; Jamie has not. The plan page itself only shows a plan
+  // when there is an approved library, or a draft on a dev server with ALLOW_DRAFT_PLANS=true.
+  await admin.from("plan_screen_answers").insert({
+    athlete_id: older.athleteId,
+    pain_now: false,
+    throwing_arm_pain: false,
+    has_training_age: true,
+    season_phase: "off_season",
+  });
+
   const browser = await chromium.launch();
   try {
     for (const [size, width, height] of SIZES) {
@@ -144,7 +158,17 @@ async function main() {
         { name: "athlete-invite", path: `/athletes/${older.athleteId}/invite` },
         { name: "sport-new", path: `/athletes/${older.athleteId}/sports/new` },
         { name: "stat-new", path: `/athletes/${older.athleteId}/stats/new?sport=${baseballSportId}&metric=Fastball%20velocity` },
+        {
+          name: "athlete-15-levels-open",
+          path: `/athletes/${older.athleteId}`,
+          prepare: async (page: Page) => {
+            for (const summary of await page.getByText("See every level's numbers").all()) await summary.click();
+          },
+        },
         { name: "plan-subscribed", path: "/plan" },
+        { name: "plan-athlete", path: `/plan/${older.athleteId}` },
+        { name: "plan-questions-first", path: `/plan/${younger.athleteId}/questions` },
+        { name: "plan-questions-change", path: `/plan/${older.athleteId}/questions` },
         { name: "account-subscribed", path: "/account" },
       ]) await capture(parent, shot, size);
       await parent.close();
