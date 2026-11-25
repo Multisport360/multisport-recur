@@ -128,6 +128,7 @@ async function main() {
     throwing_arm_pain: false,
     has_training_age: true,
     season_phase: "off_season",
+    team_sessions_per_week: 2,
   });
 
   const browser = await chromium.launch();

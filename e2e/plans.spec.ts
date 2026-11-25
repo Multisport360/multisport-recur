@@ -130,16 +130,18 @@ test.describe("local development with ALLOW_DRAFT_PLANS=true", () => {
       await expect(page).toHaveURL(new RegExp(`^${DEV_URL}/plan\\?checkout=done`), { timeout: 60_000 });
       await expect(page.getByRole("status")).toContainText("You're subscribed.");
 
-      // The four questions, before the first plan.
+      // The five questions, before the first plan.
       await page.getByRole("link", { name: "Answer the plan questions" }).click();
       await expect(page.getByRole("heading", { level: 1 })).toHaveText("Before Sam's first plan");
       await expect(page.getByTestId("draft-banner")).toHaveText(DRAFT_BANNER);
       await page.getByRole("button", { name: "Build Sam's plan" }).click();
       await expect(page.getByText("Choose yes or no for pain right now.")).toBeVisible();
       await page.getByRole("group", { name: /pain right now/ }).getByLabel("No").check();
+      await expect(page.getByRole("group", { name: /throwing shoulder or elbow/ }).locator("legend")).toHaveText("Any pain in the throwing shoulder or elbow in the last month?");
       await page.getByRole("group", { name: /throwing shoulder or elbow/ }).getByLabel("No").check();
       await page.getByRole("group", { name: /a year of strength training/ }).getByLabel("No").check();
       await page.getByRole("group", { name: /in their season/ }).getByLabel("Off-season").check();
+      await page.getByRole("group", { name: /team practices or games/ }).getByLabel("2", { exact: true }).check();
       await page.getByRole("button", { name: "Build Sam's plan" }).click();
 
       // The draft plan, with the banner at the very top and safety first.
@@ -155,6 +157,9 @@ test.describe("local development with ALLOW_DRAFT_PLANS=true", () => {
       const firstDay = page.getByTestId("plan-day").first();
       await expect(firstDay.getByRole("heading", { level: 3 })).toHaveText("Monday: Strength A and throwing");
       await expect(firstDay).toContainText("Cue: Chest up, knees track over toes, full depth you can control.");
+      // The 2 team practices count toward Foundation's 4 hard days.
+      await expect(page.getByTestId("hard-day-limit")).toContainText("No more than 4 hard days a week, counting 2 team practices or games.");
+      await expect(page.getByTestId("plan")).toContainText("One throwing day was left out on Wednesday to stay within 4 hard days a week, counting 2 team practices or games.");
 
       // Mark a session done; it is saved per athlete.
       await expect(page.getByTestId("completed-count")).toContainText("0 of");
@@ -171,8 +176,11 @@ test.describe("local development with ALLOW_DRAFT_PLANS=true", () => {
       await page.getByRole("button", { name: "Save and update the plan" }).click();
       await expect(page.getByTestId("plan-stopped")).toHaveText("Get this checked by a doctor or athletic trainer before starting a training plan.");
       await expect(page.getByTestId("plan")).toHaveCount(0);
-      const answers = await admin.from("plan_screen_answers").select("pain_now, answered_at").eq("athlete_id", athleteId).order("answered_at");
-      expect(answers.data?.map((row) => row.pain_now)).toEqual([false, true]);
+      const answers = await admin.from("plan_screen_answers").select("pain_now, team_sessions_per_week, answered_at").eq("athlete_id", athleteId).order("answered_at");
+      expect(answers.data?.map((row) => [row.pain_now, row.team_sessions_per_week])).toEqual([
+        [false, 2],
+        [true, 2],
+      ]);
     } finally {
       await removeSignedUpParent(admin, email);
     }
@@ -241,6 +249,37 @@ test("an answer saved at 8 pm Eastern shows that day's date for an Eastern famil
     await admin.from("families").update({ timezone: "UTC" }).eq("id", family.familyId);
     await page.reload();
     await expect(page.getByText(/^Answers from /)).toContainText("Answers from Nov 25, 2026.");
+  } finally {
+    await removeApproved();
+  }
+});
+
+test("answers saved before the team-practice question ask for it; a full team week adds no hard days", async ({ page, admin, newParent }) => {
+  test.setTimeout(90_000);
+  const removeApproved = await addApprovedLibrary(admin);
+  try {
+    const family = await newParent("plans-team");
+    const athleteId = await ninthGradePitcher(admin, family);
+    await subscribe(admin, family);
+    await answerScreens(admin, athleteId, { throwing_arm_pain: false, season_phase: "in_season", team_sessions_per_week: null });
+    await signIn(page, family.user);
+
+    await page.goto(`/plan/${athleteId}`);
+    await expect(page.getByTestId("plan-needs-answers")).toContainText("The plan now asks how many team practices or games Sam has in a typical week");
+    await expect(page.getByTestId("plan")).toHaveCount(0);
+    await page.getByRole("link", { name: "Answer the new question" }).click();
+
+    // The earlier answers are filled in; only the new one is needed.
+    await expect(page.getByRole("group", { name: /in their season/ }).getByLabel("In-season")).toBeChecked();
+    await page.getByRole("button", { name: "Save and update the plan" }).click();
+    await expect(page.getByText("Choose how many team practices or games there are in a typical week.")).toBeVisible();
+    await page.getByRole("group", { name: /team practices or games/ }).getByLabel("5").check();
+    await page.getByRole("button", { name: "Save and update the plan" }).click();
+
+    await expect(page.getByTestId("plan-messages")).toContainText("With 5 team practices or games a week, the team schedule already uses all 4 hard days this plan allows.");
+    await expect(page.getByTestId("plan-day").getByRole("heading", { level: 3, name: /Strength|Throwing/i })).toHaveCount(0);
+    await expect(page.getByTestId("plan")).toContainText("Strength A was left out to stay within 4 hard days a week, counting 5 team practices or games.");
+    await expect(page.getByTestId("hard-day-limit")).toContainText("counting 5 team practices or games");
   } finally {
     await removeApproved();
   }

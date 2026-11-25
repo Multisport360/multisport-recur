@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatValue, metricInSentence } from "@/lib/benchmarks/format";
+import { teamSessionsText } from "@/lib/plan/rules";
 import { DAY_NAMES } from "@/lib/plan/schedule";
 import { sessionKey } from "@/lib/plan/queries";
 import type { BuiltPlan, PlanItem, PlanWeek, Session } from "@/lib/plan/types";
@@ -234,9 +235,10 @@ function HowItWorks({ plan }: { plan: BuiltPlan }) {
           <li key={rule}>{rule}</li>
         ))}
         <li>{plan.progression}</li>
-        <li>
-          No more than {plan.hardDayLimit} hard days a week. Training replaces some practice time rather than piling on top
-          of a full sport schedule.
+        <li data-testid="hard-day-limit">
+          No more than {plan.hardDayLimit} hard days a week
+          {plan.teamSessionsPerWeek > 0 ? `, counting ${teamSessionsText(plan.teamSessionsPerWeek)}` : ""}. Training replaces some
+          practice time rather than piling on top of a full sport schedule.
         </li>
       </ul>
       {plan.leftOut.length > 0 ? (

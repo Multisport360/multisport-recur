@@ -7,14 +7,16 @@ import {
   FOCUS_ON_STRENGTH_DAYS,
   HARD_DAY_LIMIT,
   HURDLE_ONLY,
+  MAX_TEAM_SESSIONS,
   INTERVAL_THROWING,
   PAIN_LINE,
+  planHardDayBudget,
   PRESS_EXERCISE,
   screenMessage,
   THROWING_CAUTION,
   THROWING_CAUTION_BELOW_GRADE,
-  THROWING_DAY_POSITIONS,
   THROWING_ITEMS,
+  teamSessionsText,
 } from "./rules.ts";
 import { layOutWeek, type RunPlan, type StrengthDayPlan } from "./schedule.ts";
 import { chooseModules, chooseTier, notTrainableMessages } from "./select.ts";
@@ -36,6 +38,7 @@ type Context = {
   throwingRemoved: boolean;
   pitcherInSeason: boolean;
   hasHurdles: boolean;
+  teamSessionsPerWeek: number;
 };
 
 const LOW_END_WEEKS = 2;
@@ -76,11 +79,12 @@ function warmup(ctx: Context): SessionBlock {
 
 /** Work that runs on throwing days: the interval program and the catcher drills. */
 function throwingDayWork(ctx: Context): PlanItem[] {
-  // The template doses the interval program per week ("3–4 days a week"); a day shows its share of that.
+  // The template doses the interval program per week ("3–4 days a week"). The count isn't repeated here: team
+  // practices can leave fewer throwing days, and "How this plan works" says which were left out.
   const fromVelocity = ctx.modules.some((mod) => mod.id === "throwing_velocity")
     ? items(ctx, moduleById(ctx.library, "throwing_velocity").work.filter((item) => item.name === INTERVAL_THROWING), true).map((item) => ({
         ...item,
-        dose: `One of the ${THROWING_DAY_POSITIONS.length} throwing days this week`,
+        dose: "One of this week's throwing days",
       }))
     : [];
   const fromCatcher = ctx.activeIds.has("catcher_pop") ? items(ctx, moduleById(ctx.library, "catcher_pop").work, lowFocus(ctx)) : [];
@@ -184,6 +188,7 @@ function buildWeek(ctx: Context): { week: PlanWeek; leftOut: string[] } {
     throwingBlock: hasThrowingDays(ctx) ? { kind: "throwing", heading: "Throwing", items: throwingWork } : null,
     runs: [...speedEnduranceRun(ctx), ...enduranceRuns(ctx)],
     hardDayLimit: HARD_DAY_LIMIT[ctx.tier],
+    teamSessionsPerWeek: ctx.teamSessionsPerWeek,
     warmup: warmup(ctx),
   });
   return { week: { week: ctx.week, note: weekNote(ctx.library, ctx.week), days }, leftOut };
@@ -196,10 +201,16 @@ function safetyNotes(ctx: Omit<Context, "week">, grade: number, weeks: readonly 
   return [PAIN_LINE, ...caution, ...new Set(moduleNotes)];
 }
 
-function screenMessages(library: TemplateLibrary, input: PlanInput, phase: SeasonPhase): string[] {
+/** Shown when the team's practices and games already use every hard day the tier allows. */
+export function teamScheduleFullMessage(tier: TierId, teamSessionsPerWeek: number): string {
+  return `With ${teamSessionsText(teamSessionsPerWeek)} a week, the team schedule already uses all ${HARD_DAY_LIMIT[tier]} hard days this plan allows. The plan adds no strength, sprint or throwing days on top; anything left is easy work.`;
+}
+
+function screenMessages(library: TemplateLibrary, input: PlanInput, phase: SeasonPhase, tier: TierId, teamSessionsPerWeek: number): string[] {
   return [
     ...(input.screens.throwingArmPain === true ? [screenMessage(library, "throwing_arm_pain")] : []),
     ...(phase === "rest_period" ? [library.season_phases.rest_period] : []),
+    ...(planHardDayBudget(tier, teamSessionsPerWeek) === 0 ? [teamScheduleFullMessage(tier, teamSessionsPerWeek)] : []),
   ];
 }
 
@@ -213,6 +224,8 @@ export function buildPlan(library: TemplateLibrary, input: PlanInput): PlanResul
   const chosenIds = modules.map((mod) => mod.id);
   const companions = chosenIds.flatMap((id) => COMPANION_MODULE[id] ?? []);
   const throwingRemoved = input.screens.throwingArmPain === true || phase === "rest_period";
+  // A whole number from 0 to 7; anything else is a caller's bug, so it is clamped rather than trusted.
+  const teamSessionsPerWeek = Math.min(MAX_TEAM_SESSIONS, Math.max(0, Math.floor(input.screens.teamSessionsPerWeek)));
 
   const base: Omit<Context, "week"> = {
     library,
@@ -223,6 +236,7 @@ export function buildPlan(library: TemplateLibrary, input: PlanInput): PlanResul
     throwingRemoved,
     pitcherInSeason: phase === "in_season" && input.sports.some((sport) => sport.sport === "Baseball" && sport.positionOrEvent === "Pitcher"),
     hasHurdles: input.sports.some((sport) => /hurdles/i.test(sport.positionOrEvent)),
+    teamSessionsPerWeek,
   };
 
   const built = Array.from({ length: library.block.weeks }, (_, index) => buildWeek({ ...base, week: index + 1 }));
@@ -239,8 +253,9 @@ export function buildPlan(library: TemplateLibrary, input: PlanInput): PlanResul
     modules,
     weeks,
     safetyNotes: safetyNotes(base, input.grade, weeks),
-    messages: [...screenMessages(library, input, phase), ...notTrainableMessages(library, input.gaps)],
+    messages: [...screenMessages(library, input, phase, tier, teamSessionsPerWeek), ...notTrainableMessages(library, input.gaps)],
     hardDayLimit: HARD_DAY_LIMIT[tier],
+    teamSessionsPerWeek,
     leftOut: [...new Set(built.flatMap((result) => result.leftOut))],
   };
   return plan;

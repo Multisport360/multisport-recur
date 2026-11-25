@@ -97,7 +97,7 @@ export default async function PlanPage({ searchParams }: Props) {
                 </Link>
               ) : (
                 <>
-                  <p className="mt-0.5">Answer 4 short safety questions to build {athlete.first_name}&apos;s first plan.</p>
+                  <p className="mt-0.5">Answer 5 short questions to build {athlete.first_name}&apos;s first plan.</p>
                   <Link href={`/plan/${athlete.id}/questions`} className="button mt-1 w-full sm:w-auto">
                     Answer the plan questions
                   </Link>

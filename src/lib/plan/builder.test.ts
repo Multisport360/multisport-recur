@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { buildPlan } from "./builder";
+import { buildPlan, teamScheduleFullMessage } from "./builder";
 import { MODULE_IDS, SEASON_PHASES, type ModuleId, type SeasonPhase } from "./library-schema";
-import { ADDED_THROWING_VOLUME, HARD_DAY_LIMIT, INTERVAL_THROWING, PAIN_LINE, THROWING_CAUTION, THROWING_ITEMS } from "./rules";
+import { ADDED_THROWING_VOLUME, HARD_DAY_LIMIT, INTERVAL_THROWING, MAX_TEAM_SESSIONS, PAIN_LINE, THROWING_CAUTION, THROWING_ITEMS } from "./rules";
 import { MAX_FOCUS_MODULES } from "./select";
 import { draftLibrary, gap, screens } from "./test-library";
 import type { AthleteSportRef, BuiltPlan, PlanInput, PlanWeek, StatGap } from "./types";
@@ -36,7 +36,10 @@ function expectRulesHold(p: BuiltPlan) {
     for (const day of days) expect(days, `week ${week.week}: strength on consecutive days`).not.toContain(day + 1);
     // Weeks repeat, so Sunday and the next Monday must not both be strength days.
     expect(days.includes(6) && days.includes(0)).toBe(false);
-    expect(hardDays(week), `week ${week.week}: hard days`).toBeLessThanOrEqual(HARD_DAY_LIMIT[p.tier]);
+    // Team practices and games count toward the limit, so the plan's own hard days get what is left.
+    expect(hardDays(week) + p.teamSessionsPerWeek, `week ${week.week}: hard days with ${p.teamSessionsPerWeek} team sessions`).toBeLessThanOrEqual(
+      Math.max(HARD_DAY_LIMIT[p.tier], p.teamSessionsPerWeek),
+    );
     expect(restDays(week), `week ${week.week}: rest days`).toBeGreaterThanOrEqual(1);
     for (const day of week.days) {
       const isSpeedEndurance = day.session?.title.includes("Speed endurance run");
@@ -164,6 +167,81 @@ describe("the season_phase screen", () => {
   });
 });
 
+describe("the team_sessions screen: practices and games count toward the hard-day limit", () => {
+  const throwingDays = (week: PlanWeek) => week.days.filter((day) => day.session?.blocks.some((block) => block.kind === "throwing")).map((day) => day.day);
+
+  test("no team practices leaves the plan as it was: 4 hard days for a Foundation pitcher", () => {
+    const p = plan({ screens: screens({ teamSessionsPerWeek: 0 }) });
+    expect(p.teamSessionsPerWeek).toBe(0);
+    for (const week of p.weeks) expect(hardDays(week)).toBe(4);
+    expect(p.leftOut).toEqual([]);
+  });
+
+  test("2 practices leave a Foundation pitcher 2 hard days: both strength days stay, throwing that needs a new day goes", () => {
+    const p = plan({ screens: screens({ teamSessionsPerWeek: 2 }) });
+    for (const week of p.weeks) {
+      expect(hardDays(week)).toBe(2);
+      expect(strengthDays(week)).toEqual([0, 3]);
+      // Monday's throwing shares the strength day; Wednesday and Friday would be new hard days.
+      expect(throwingDays(week)).toEqual([0]);
+    }
+    expect(p.leftOut).toEqual([
+      "One throwing day was left out on Wednesday to stay within 4 hard days a week, counting 2 team practices or games.",
+      "One throwing day was left out on Friday to stay within 4 hard days a week, counting 2 team practices or games.",
+    ]);
+    // The day's dose doesn't promise 3 throwing days when only 1 is left.
+    expect(allItems(p).find((item) => item.name === INTERVAL_THROWING)?.dose).toBe("One of this week's throwing days");
+    expectRulesHold(p);
+  });
+
+  test("3 practices drop Strength C for Development (C first, then B, then A)", () => {
+    const sprinter = { sports: [SPRINTER], gaps: [gap("100m", 0.04, "Track & Field", "100m", "sec")], grade: 12 };
+    const three = plan({ ...sprinter, screens: screens({ hasTrainingAge: true, teamSessionsPerWeek: 3 }) });
+    expect(three.tier).toBe("development");
+    for (const week of three.weeks) {
+      expect(strengthDays(week)).toEqual([0, 3]);
+      expect(hardDays(week)).toBe(2);
+    }
+    expect(three.leftOut).toEqual(["Strength C was left out to stay within 5 hard days a week, counting 3 team practices or games."]);
+
+    const four = plan({ ...sprinter, screens: screens({ hasTrainingAge: true, teamSessionsPerWeek: 4 }) });
+    for (const week of four.weeks) expect(week.days.filter((day) => day.session?.strengthDay).map((day) => day.session?.strengthDay)).toEqual(["strength_a"]);
+    expect(four.leftOut).toContain("Strength B was left out to stay within 5 hard days a week, counting 4 team practices or games.");
+    expectRulesHold(four);
+  });
+
+  test("when the team uses every hard day, the plan adds none and says why", () => {
+    const p = plan({ screens: screens({ teamSessionsPerWeek: 4 }) });
+    for (const week of p.weeks) expect(hardDays(week)).toBe(0);
+    expect(p.messages).toContain("With 4 team practices or games a week, the team schedule already uses all 4 hard days this plan allows. The plan adds no strength, sprint or throwing days on top; anything left is easy work.");
+    expect(p.leftOut).toContain("Strength A was left out to stay within 4 hard days a week, counting 4 team practices or games.");
+  });
+
+  test("a distance runner with a full team week keeps only the easy runs", () => {
+    const p = plan({ sports: [{ sport: "Track & Field", positionOrEvent: "1600m" }], gaps: [gap("1600m", 0.05, "Track & Field", "1600m", "sec")], screens: screens({ teamSessionsPerWeek: 6 }) });
+    const sessions = p.weeks.flatMap((week) => week.days.flatMap((day) => (day.session ? [day.session] : [])));
+    expect(sessions.length).toBeGreaterThan(0);
+    expect(sessions.every((session) => !session.isHard && session.title.startsWith("Easy run"))).toBe(true);
+    expectRulesHold(p);
+  });
+
+  test("1 practice reads as singular, and only the limit's message changes", () => {
+    const p = plan({ screens: screens({ teamSessionsPerWeek: 1 }) });
+    for (const week of p.weeks) expect(hardDays(week)).toBe(3);
+    expect(p.leftOut).toEqual(["One throwing day was left out on Friday to stay within 4 hard days a week, counting 1 team practice or game."]);
+  });
+
+  test("a count outside 0 to 7 is clamped, never trusted", () => {
+    expect(plan({ screens: screens({ teamSessionsPerWeek: 12 }) }).teamSessionsPerWeek).toBe(MAX_TEAM_SESSIONS);
+    expect(plan({ screens: screens({ teamSessionsPerWeek: -3 }) }).teamSessionsPerWeek).toBe(0);
+    expect(plan({ screens: screens({ teamSessionsPerWeek: 2.7 }) }).teamSessionsPerWeek).toBe(2);
+  });
+
+  test("the full-week message names the tier's limit", () => {
+    expect(teamScheduleFullMessage("development", 7)).toMatch(/^With 7 team practices or games a week, the team schedule already uses all 5 hard days/);
+  });
+});
+
 describe("choosing focus modules", () => {
   test("at most 2, the biggest gaps as a share of the next level's number", () => {
     const p = plan({
@@ -264,18 +342,20 @@ describe("the rules hold for every combination", () => {
   const pickable = MODULE_IDS.filter((id) => id !== "agility");
   const pairs = pickable.flatMap((a, i) => pickable.slice(i).map((b) => [a, b] as const));
 
-  test.each(pairs)("%s + %s, both tiers, every season phase", (a, b) => {
+  test.each(pairs)("%s + %s, both tiers, every season phase, 0 to 7 team sessions", (a, b) => {
     for (const hasTrainingAge of [false, true]) {
       for (const seasonPhase of SEASON_PHASES) {
         for (const throwingArmPain of [false, true]) {
-          const p = plan({
-            grade: 11,
-            sports: [sportFor[a].sport, sportFor[b].sport],
-            gaps: [gap(sportFor[a].metric, 0.1), gap(sportFor[b].metric, 0.05)],
-            screens: screens({ hasTrainingAge, seasonPhase, throwingArmPain }),
-          });
-          expectRulesHold(p);
-          if (throwingArmPain || p.seasonPhase === "rest_period") for (const name of THROWING_ITEMS) expect(itemNames(p)).not.toContain(name);
+          for (const teamSessionsPerWeek of [0, 2, 4, MAX_TEAM_SESSIONS]) {
+            const p = plan({
+              grade: 11,
+              sports: [sportFor[a].sport, sportFor[b].sport],
+              gaps: [gap(sportFor[a].metric, 0.1), gap(sportFor[b].metric, 0.05)],
+              screens: screens({ hasTrainingAge, seasonPhase, throwingArmPain, teamSessionsPerWeek }),
+            });
+            expectRulesHold(p);
+            if (throwingArmPain || p.seasonPhase === "rest_period") for (const name of THROWING_ITEMS) expect(itemNames(p)).not.toContain(name);
+          }
         }
       }
     }

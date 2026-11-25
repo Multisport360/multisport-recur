@@ -47,7 +47,15 @@ export async function addApprovedLibrary(admin: Client): Promise<() => Promise<v
 export async function answerScreens(
   admin: Client,
   athleteId: string,
-  answers: { pain_now?: boolean; throwing_arm_pain?: boolean | null; has_training_age?: boolean; season_phase?: string; answered_at?: string } = {},
+  answers: {
+    pain_now?: boolean;
+    throwing_arm_pain?: boolean | null;
+    has_training_age?: boolean;
+    season_phase?: string;
+    /** Null saves an answer set from before the team-practice question existed. */
+    team_sessions_per_week?: number | null;
+    answered_at?: string;
+  } = {},
 ): Promise<void> {
   const saved = await admin.from("plan_screen_answers").insert({
     athlete_id: athleteId,
@@ -55,6 +63,7 @@ export async function answerScreens(
     throwing_arm_pain: null,
     has_training_age: false,
     season_phase: "off_season",
+    team_sessions_per_week: 0,
     ...answers,
   });
   if (saved.error) throw new Error(`could not save plan answers: ${saved.error.message}`);

@@ -58,6 +58,11 @@
     {
       "id": "season_phase",
       "question": "Where is the athlete in their season for this sport? (off-season, pre-season, in-season, or — baseball only — their yearly break from throwing)"
+    },
+    {
+      "id": "team_sessions",
+      "question": "How many team practices or games does the athlete have in a typical week?",
+      "rule": "Each practice or game counts as one hard day toward the tier's weekly limit. Strength days are dropped (C first, then B, then A) when the team schedule leaves no room for them."
     }
   ],
 

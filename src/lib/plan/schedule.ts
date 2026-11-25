@@ -1,11 +1,12 @@
 import type { StrengthDayId } from "./library-schema.ts";
-import { STRENGTH_DAY_POSITIONS, THROWING_DAY_POSITIONS } from "./rules.ts";
+import { STRENGTH_DAY_POSITIONS, teamSessionsText, THROWING_DAY_POSITIONS } from "./rules.ts";
 import type { DayIndex, PlanDay, Session, SessionBlock } from "./types.ts";
 
 /**
  * Lays one week out day by day. Pure and rule-checked:
  *   - strength days never fall on consecutive days (positions in STRENGTH_DAY_POSITIONS);
- *   - hard days never exceed the tier's limit;
+ *   - hard days never exceed the tier's limit, counting the team's practices and games
+ *     (strength days are dropped from the end of the list when the team schedule leaves no room);
  *   - at least one full rest day is kept;
  *   - a run marked `notAfterStrength` never lands the day after a strength day.
  * Work that cannot be placed without breaking a rule is left out and reported, never squeezed in.
@@ -33,6 +34,8 @@ export type WeekRequest = {
   throwingBlock: SessionBlock | null;
   runs: readonly RunPlan[];
   hardDayLimit: number;
+  /** Team practices or games in a typical week. Each one uses a hard day of the limit. */
+  teamSessionsPerWeek: number;
   /** "Warm-up (every session)": added in front of any session that starts on an empty day. */
   warmup: SessionBlock;
 };
@@ -67,6 +70,19 @@ function fitsHardLimit(slots: readonly Slot[], day: number, isHard: boolean, lim
   return !isHard || slots[day]?.isHard === true || hardCount(slots) + 1 <= limit;
 }
 
+/** "within 4 hard days a week", "within 4 hard days a week, counting 3 team practices or games". */
+function limitText(request: WeekRequest): string {
+  const counting = request.teamSessionsPerWeek > 0 ? `, counting ${teamSessionsText(request.teamSessionsPerWeek)}` : "";
+  return `within ${request.hardDayLimit} hard days a week${counting}`;
+}
+
+/** Keeps as many strength days as the hard-day budget allows, in template order (A, then B, then C). */
+function strengthThatFits(request: WeekRequest, budget: number, leftOut: string[]): StrengthDayPlan[] {
+  const kept = request.strengthDays.slice(0, budget);
+  for (const dropped of request.strengthDays.slice(budget)) leftOut.push(`${dropped.title} was left out to stay ${limitText(request)}.`);
+  return kept;
+}
+
 function placeStrength(slots: Slot[], strengthDays: readonly StrengthDayPlan[]): Slot[] {
   const positions = STRENGTH_DAY_POSITIONS[strengthDays.length as 1 | 2 | 3] ?? [];
   return strengthDays.reduce((week, plan, index) => {
@@ -76,11 +92,11 @@ function placeStrength(slots: Slot[], strengthDays: readonly StrengthDayPlan[]):
   }, slots);
 }
 
-function placeThrowing(slots: Slot[], block: SessionBlock | null, limit: number, warmup: SessionBlock, leftOut: string[]): Slot[] {
+function placeThrowing(slots: Slot[], block: SessionBlock | null, limit: number, warmup: SessionBlock, leftOut: string[], why: string): Slot[] {
   if (!block) return slots;
   return THROWING_DAY_POSITIONS.reduce((week, day) => {
     if (!fitsHardLimit(week, day, true, limit)) {
-      leftOut.push(`One throwing day was left out on ${DAY_NAMES[day]} to stay within ${limit} hard days a week.`);
+      leftOut.push(`One throwing day was left out on ${DAY_NAMES[day]} to stay ${why}.`);
       return week;
     }
     return addTo(week, day, "Throwing", [block], true, warmup);
@@ -118,10 +134,12 @@ function toSession(slot: Slot): Session | null {
 
 export function layOutWeek(request: WeekRequest): { days: PlanDay[]; leftOut: string[] } {
   const leftOut: string[] = [];
-  let slots = placeStrength(emptyWeek(), request.strengthDays);
-  slots = placeThrowing(slots, request.throwingBlock, request.hardDayLimit, request.warmup, leftOut);
+  // The team's practices and games use part of the limit; the plan's own hard days get the rest.
+  const budget = Math.max(0, request.hardDayLimit - request.teamSessionsPerWeek);
+  let slots = placeStrength(emptyWeek(), strengthThatFits(request, budget, leftOut));
+  slots = placeThrowing(slots, request.throwingBlock, budget, request.warmup, leftOut, limitText(request));
   // Hard runs first, so the easy ones fill in around them.
   const ordered = [...request.runs].sort((a, b) => Number(b.isHard) - Number(a.isHard));
-  for (const run of ordered) slots = placeRun(slots, run, request.hardDayLimit, request.warmup, leftOut);
+  for (const run of ordered) slots = placeRun(slots, run, budget, request.warmup, leftOut);
   return { days: DAYS.map((day) => ({ day, session: toSession(slots[day] as Slot) })), leftOut };
 }

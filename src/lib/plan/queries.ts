@@ -56,12 +56,21 @@ export async function loadPlanLibrary(supabase: Client): Promise<LoadedLibrary |
   }
 }
 
+/** Saved answers. teamSessionsPerWeek is null on answers saved before that question was asked. */
+export type SavedAnswers = Omit<ScreenAnswers, "teamSessionsPerWeek"> & { teamSessionsPerWeek: number | null };
+
 export type SavedScreens = {
-  answers: ScreenAnswers;
+  answers: SavedAnswers;
   answeredAt: Date;
   /** When the questions were first answered: the training blocks count from here. */
   firstAnsweredAt: Date;
 };
+
+/** The answers the builder needs, or null when one is still missing (the practice count on older answers). */
+export function completeAnswers(answers: SavedAnswers): ScreenAnswers | null {
+  const { teamSessionsPerWeek } = answers;
+  return teamSessionsPerWeek === null ? null : { ...answers, teamSessionsPerWeek };
+}
 
 function isSeasonPhase(value: string): value is SeasonPhase {
   return (SEASON_PHASES as readonly string[]).includes(value);
@@ -71,7 +80,7 @@ function isSeasonPhase(value: string): value is SeasonPhase {
 export async function loadScreens(supabase: Client, athleteId: string): Promise<SavedScreens | null> {
   const { data, error } = await supabase
     .from("plan_screen_answers")
-    .select("pain_now, throwing_arm_pain, has_training_age, season_phase, answered_at")
+    .select("pain_now, throwing_arm_pain, has_training_age, season_phase, team_sessions_per_week, answered_at")
     .eq("athlete_id", athleteId)
     .order("answered_at", { ascending: true });
   if (error) throw new Error(`Could not load the plan answers: ${error.message}`);
@@ -85,6 +94,7 @@ export async function loadScreens(supabase: Client, athleteId: string): Promise<
       throwingArmPain: latest.throwing_arm_pain,
       hasTrainingAge: latest.has_training_age,
       seasonPhase: latest.season_phase,
+      teamSessionsPerWeek: latest.team_sessions_per_week,
     },
     answeredAt: new Date(latest.answered_at),
     firstAnsweredAt: new Date(first.answered_at),

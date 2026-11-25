@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * The shape of data/plan_templates.draft.json: one versioned "template library" that the
  * plan builder picks from. Every field is checked, unknown keys are refused, and the checks
- * across fields (sources exist, screens are the four we know, no weighted-ball wording) run
+ * across fields (sources exist, screens are the five we know, no weighted-ball wording) run
  * too. The seed script and the app both use this, so a malformed library never reaches a family.
  *
  * Imports are relative with .ts extensions so `node scripts/seed-plan-templates.ts` can load it.
@@ -22,7 +22,7 @@ export type TierId = (typeof TIER_IDS)[number];
 export const SEASON_PHASES = ["off_season", "pre_season", "in_season", "rest_period"] as const;
 export type SeasonPhase = (typeof SEASON_PHASES)[number];
 
-export const SCREEN_IDS = ["pain_now", "throwing_arm_pain", "training_age", "season_phase"] as const;
+export const SCREEN_IDS = ["pain_now", "throwing_arm_pain", "training_age", "season_phase", "team_sessions"] as const;
 export type ScreenId = (typeof SCREEN_IDS)[number];
 
 export const STRENGTH_DAY_IDS = ["strength_a", "strength_b", "strength_c"] as const;
@@ -53,6 +53,8 @@ const screenSchema = z.strictObject({
   question: text,
   if_yes: text.optional(),
   if_no: text.optional(),
+  /** What the builder does with an answer that is a number, not yes or no. */
+  rule: text.optional(),
 });
 
 const exerciseSchema = z.strictObject({

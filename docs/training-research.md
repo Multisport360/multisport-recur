@@ -8,7 +8,7 @@
 2. The app picks at most 2 **focus modules** for those stats (sprint speed, jumping power, throwing velocity and so on).
 3. The focus modules are added to a shared **strength base**: 2 days a week in the Foundation tier, 3 in the Development tier.
 4. Every plan is a 6-week block that ends with a retest.
-5. Safety screens run first: current pain, throwing-arm pain, training experience and season phase.
+5. Safety screens run first: current pain, throwing-arm pain, training experience and season phase. A fifth question asks how many team practices or games the athlete has in a typical week; each one counts as a hard day toward the weekly limit.
 
 All of this is plain code choosing from fixed templates. The AI never writes or changes a plan.
 
@@ -56,7 +56,7 @@ All of this is plain code choosing from fixed templates. The AI never writes or 
 3. Should a light sled stay in Development, or come out?
 4. Are the distance-running volumes safe for 8th–12th graders?
 5. Should overload/underload bats be added to the Development tier?
-6. Are the in-season reductions enough when the athlete also has team practice?
+6. Are the in-season reductions enough when the athlete also has team practice? (The plan now counts each team practice or game as one hard day. Is one hard day per practice or game the right count?)
 7. Which exercise swaps should the app offer when a family has no gym (bodyweight-only versions)?
 8. Is anything missing that should be a hard stop (a reason to show no plan)?
 

@@ -10,7 +10,7 @@ import { formatDayIn } from "@/lib/dates";
 import { gradeFromGradYear } from "@/lib/grade";
 import { blockPosition, isRetestWeek, weekToShow } from "@/lib/plan/block";
 import { buildPlan } from "@/lib/plan/builder";
-import { loadAthleteGaps, loadCompletions, loadPlanLibrary, loadScreens } from "@/lib/plan/queries";
+import { completeAnswers, loadAthleteGaps, loadCompletions, loadPlanLibrary, loadScreens } from "@/lib/plan/queries";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Training plan" };
@@ -40,20 +40,27 @@ export default async function AthletePlanPage({ params, searchParams }: Props) {
   const screens = await loadScreens(supabase, athlete.id);
   const banner = library.reviewStatus === "draft" ? <DraftBanner /> : null;
 
-  if (!screens) {
+  const answers = screens ? completeAnswers(screens.answers) : null;
+  if (!screens || !answers) {
+    // No answers yet, or answers saved before the team-practice question was added.
+    const isNewQuestion = screens !== null;
     return (
       <div className="max-w-80">
         {banner}
         <h1 className="text-[2.75rem]">{heading}</h1>
         <p data-testid="plan-needs-answers" className="mt-2">
           {isParent
-            ? `Before the first plan, answer 4 short safety questions about ${name}.`
-            : "Before your first plan, a parent answers 4 short safety questions. Ask them to open the training plan from their account."}
+            ? isNewQuestion
+              ? `The plan now asks how many team practices or games ${name} has in a typical week, so it doesn't pile hard days on top of them. Answer it to see the plan.`
+              : `Before the first plan, answer 5 short questions about ${name}.`
+            : isNewQuestion
+              ? "The plan has a new question about your team schedule. Ask a parent to answer it from their account."
+              : "Before your first plan, a parent answers 5 short questions. Ask them to open the training plan from their account."}
         </p>
         {isParent ? (
           <p className="mt-3">
             <Link href={`/plan/${athlete.id}/questions`} className="button w-full sm:w-auto">
-              Answer the plan questions
+              {isNewQuestion ? "Answer the new question" : "Answer the plan questions"}
             </Link>
           </p>
         ) : null}
@@ -63,7 +70,7 @@ export default async function AthletePlanPage({ params, searchParams }: Props) {
 
   const today = new Date();
   const { sports, gaps, benchmarksDown } = await loadAthleteGaps(supabase, athlete);
-  const plan = buildPlan(library.library, { grade: gradeFromGradYear(athlete.grad_year, today), sports, gaps, screens: screens.answers });
+  const plan = buildPlan(library.library, { grade: gradeFromGradYear(athlete.grad_year, today), sports, gaps, screens: answers });
   const answeredLine = (
     <p className="mt-1">
       Answers from {formatDayIn(screens.answeredAt, viewer.timeZone)}.{" "}

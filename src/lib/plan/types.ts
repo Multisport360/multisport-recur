@@ -1,7 +1,7 @@
 import type { Sport, Unit } from "../benchmarks/types.ts";
 import type { ModuleId, SeasonPhase, StrengthDayId, TierId } from "./library-schema.ts";
 
-/** The parent's answers to the four safety screens. */
+/** The parent's answers to the five plan questions. */
 export type ScreenAnswers = {
   painNow: boolean;
   /** Baseball only. Null when the athlete plays no baseball, so the question was not asked. */
@@ -9,6 +9,8 @@ export type ScreenAnswers = {
   /** At least a year of strength training with a coach watching technique. */
   hasTrainingAge: boolean;
   seasonPhase: SeasonPhase;
+  /** Team practices or games in a typical week, 0 to MAX_TEAM_SESSIONS. Each counts as a hard day. */
+  teamSessionsPerWeek: number;
 };
 
 /** One stat on the gap report with a next level still to reach. */
@@ -89,6 +91,8 @@ export type BuiltPlan = {
   /** Screen messages (throwing removed) and not-trainable messages for height and weight. */
   messages: string[];
   hardDayLimit: number;
+  /** Team practices or games a week, counted toward hardDayLimit. */
+  teamSessionsPerWeek: number;
   /** Work the schedule could not fit without breaking a rule, in plain words. */
   leftOut: string[];
 };

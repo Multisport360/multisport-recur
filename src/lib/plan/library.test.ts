@@ -42,6 +42,16 @@ describe("the draft template file", () => {
     expect(problemsOf({ ...draftJson(), review_status: "approved", reviewed_by: "A. Coach, CSCS", reviewed_on: "2026-12-01" })).toEqual([]);
   });
 
+  test("asks the team practices question, worded for parents", () => {
+    expect(draftLibrary().screens.find((screen) => screen.id === "team_sessions")?.question).toBe(
+      "How many team practices or games does the athlete have in a typical week?",
+    );
+    const json = draftJson();
+    const withoutIt = (json.screens as { id: string }[]).filter((screen) => screen.id !== "team_sessions");
+    // A library from before the question existed (4 screens) is refused, so it can't build a plan that ignores practices.
+    expect(problemsOf({ ...json, screens: withoutIt })).toEqual([expect.stringMatching(/^screens:/)]);
+  });
+
   test("evidence must point at a listed source", () => {
     const json = draftJson();
     const modules = (json.focus_modules as { evidence: string[] }[]).map((mod, index) => (index === 0 ? { ...mod, evidence: ["S99"] } : mod));

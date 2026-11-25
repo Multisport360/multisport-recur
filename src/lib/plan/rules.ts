@@ -9,6 +9,22 @@ import type { ModuleId, ScreenId, StrengthDayId, TemplateLibrary, TierId } from 
 /** From plan_rules: "never exceed 4 in Foundation or 5 in Development". */
 export const HARD_DAY_LIMIT: Readonly<Record<TierId, number>> = { foundation: 4, development: 5 };
 
+/**
+ * From plan_rules: "...counting team practices the family enters". The team_sessions screen
+ * offers 0 to 7, where 7 means "7 or more"; each practice or game counts as one hard day.
+ */
+export const MAX_TEAM_SESSIONS = 7;
+
+/** "1 team practice or game", "3 team practices or games". */
+export function teamSessionsText(count: number): string {
+  return count === 1 ? "1 team practice or game" : `${count} team practices or games`;
+}
+
+/** How many hard days the plan itself may add once the team's practices and games are counted. */
+export function planHardDayBudget(tier: TierId, teamSessionsPerWeek: number): number {
+  return Math.max(0, HARD_DAY_LIMIT[tier] - teamSessionsPerWeek);
+}
+
 /** From plan_rules. Shown at the top of every plan. */
 export const PAIN_LINE = "Stop and tell a parent or coach about any pain. Pain is not part of training.";
 

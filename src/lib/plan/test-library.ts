@@ -16,7 +16,7 @@ export function draftLibrary(): TemplateLibrary {
   return parseTemplateLibrary(draftJson());
 }
 
-export const SCREENS_OK: ScreenAnswers = { painNow: false, throwingArmPain: null, hasTrainingAge: false, seasonPhase: "off_season" };
+export const SCREENS_OK: ScreenAnswers = { painNow: false, throwingArmPain: null, hasTrainingAge: false, seasonPhase: "off_season", teamSessionsPerWeek: 0 };
 
 export function screens(overrides: Partial<ScreenAnswers> = {}): ScreenAnswers {
   return { ...SCREENS_OK, ...overrides };

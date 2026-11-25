@@ -8,7 +8,7 @@ import { loadPlanAccess } from "@/lib/billing/queries";
 import { hasPlanAccess } from "@/lib/billing/subscription";
 import type { TemplateLibrary } from "@/lib/plan/library-schema";
 import { loadPlanLibrary, loadScreens, type SavedScreens } from "@/lib/plan/queries";
-import { seasonChoices } from "@/lib/plan/screen-form";
+import { seasonChoices, teamSessionChoices } from "@/lib/plan/screen-form";
 import { listAthleteSports } from "@/lib/report/queries";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -31,11 +31,22 @@ function questionsFor(library: TemplateLibrary, playsBaseball: boolean, saved: S
       case "pain_now":
         return [{ name: "painNow", question: screen.question, choices: YES_NO, defaultValue: yesNo(answers?.painNow) }];
       case "throwing_arm_pain":
-        return playsBaseball ? [{ name: "throwingArmPain", question: screen.question.replace(/^Baseball only: /, ""), choices: YES_NO, defaultValue: yesNo(answers?.throwingArmPain) }] : [];
+        return playsBaseball ? [{ name: "throwingArmPain", question: screen.question.replace(/^Baseball only: (.)/, (_, first: string) => first.toUpperCase()), choices: YES_NO, defaultValue: yesNo(answers?.throwingArmPain) }] : [];
       case "training_age":
         return [{ name: "trainingAge", question: screen.question, choices: YES_NO, defaultValue: yesNo(answers?.hasTrainingAge) }];
       case "season_phase":
         return [{ name: "seasonPhase", question: "Where is the athlete in their season?", choices: seasonChoices(playsBaseball), defaultValue: answers?.seasonPhase }];
+      case "team_sessions":
+        return [
+          {
+            name: "teamSessions",
+            question: screen.question,
+            hint: "Count each practice and each game. Each one is a hard day, so the plan adds fewer of its own.",
+            choices: teamSessionChoices(),
+            defaultValue: answers?.teamSessionsPerWeek === null || answers?.teamSessionsPerWeek === undefined ? undefined : String(answers.teamSessionsPerWeek),
+            inline: true,
+          },
+        ];
     }
   });
 }
@@ -63,7 +74,7 @@ export default async function PlanQuestionsPage({ params }: Props) {
       <p className="mt-1">
         {saved
           ? "Answer again and the plan changes to match. Earlier answers are kept."
-          : `These 4 questions keep the plan safe. The answers decide whether ${name} gets a plan today, how hard it is, and whether it includes throwing.`}
+          : `These 5 questions keep the plan safe. The answers decide whether ${name} gets a plan today, how hard it is, whether it includes throwing, and how much it adds to the team schedule.`}
       </p>
       <div className="mt-3">
         <ScreensForm athleteId={athlete.id} questions={questionsFor(library.library, playsBaseball, saved)} submitLabel={saved ? "Save and update the plan" : `Build ${name}'s plan`} />

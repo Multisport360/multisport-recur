@@ -20,12 +20,12 @@ const SAVE_FAILED = "That didn't save. Wait a minute and try again.";
 const NOT_SUBSCRIBED = "The training plan needs an active subscription. Subscribe from the training plan page first.";
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** A parent answers the four questions. Every change is a new row; the newest counts. */
+/** A parent answers the five questions. Every change is a new row; the newest counts. */
 export async function saveScreens(athleteId: string, _previous: FormState, form: FormData): Promise<FormState> {
   const viewer = await requireGuardian(`/plan/${athleteId}/questions`);
   const athlete = await findAthlete(athleteId);
   if (!athlete) redirect("/plan");
-  const values = formValues(form, ["painNow", "throwingArmPain", "trainingAge", "seasonPhase"]);
+  const values = formValues(form, ["painNow", "throwingArmPain", "trainingAge", "seasonPhase", "teamSessions"]);
 
   const supabase = await createServerSupabase();
   const { access } = await loadPlanAccess(supabase, viewer.familyId);
@@ -41,6 +41,7 @@ export async function saveScreens(athleteId: string, _previous: FormState, form:
     throwing_arm_pain: parsed.data.throwingArmPain,
     has_training_age: parsed.data.hasTrainingAge,
     season_phase: parsed.data.seasonPhase,
+    team_sessions_per_week: parsed.data.teamSessionsPerWeek,
   });
   if (error) {
     console.error(`[plan] could not save the plan answers: ${error.message}`);
