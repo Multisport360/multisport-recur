@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useSyncExternalStore } from "react";
 import { CheckboxField, FormAlert, TextField } from "@/components/forms/Fields";
 import { SubmitButton } from "@/components/forms/SubmitButton";
 import { requestPasswordReset, setPassword, signIn, signUp } from "@/lib/auth/actions";
@@ -8,11 +8,24 @@ import { EMPTY_FORM_STATE } from "@/lib/forms";
 
 const PASSWORD_HINT = "At least 8 characters.";
 
+const neverChanges = () => () => {};
+/** The browser's IANA time zone, e.g. "America/New_York". Empty while rendering on the server. */
+function useBrowserTimeZone(): string {
+  return useSyncExternalStore(
+    neverChanges,
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone ?? "",
+    () => "",
+  );
+}
+
 export function SignUpForm() {
   const [state, action] = useActionState(signUp, EMPTY_FORM_STATE);
+  const timeZone = useBrowserTimeZone();
   return (
     <form action={action} className="space-y-3" noValidate>
       <FormAlert message={state.message} />
+      {/* So dates and training weeks follow the family's own calendar. */}
+      <input type="hidden" name="timezone" value={timeZone} />
       <TextField name="email" label="Your email" type="email" autoComplete="email" inputMode="email" defaultValue={state.values.email} error={state.fields.email} required />
       <TextField name="password" label="Password" type="password" autoComplete="new-password" hint={PASSWORD_HINT} error={state.fields.password} required />
       <CheckboxField name="isParent" error={state.fields.isParent}>

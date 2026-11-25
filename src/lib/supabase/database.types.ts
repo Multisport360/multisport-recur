@@ -33,7 +33,8 @@ export type BenchmarkDbRow = {
   source_id: string;
 };
 
-export type FamilyRow = { id: string; created_at: string };
+/** `timezone`: IANA name from the parent's browser at sign-up; America/New_York for older families. */
+export type FamilyRow = { id: string; created_at: string; timezone: string };
 
 export type GuardianRow = { id: string; family_id: string; user_id: string; created_at: string };
 

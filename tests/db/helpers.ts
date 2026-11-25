@@ -38,11 +38,14 @@ export type TestUser = { id: string; email: string; password: string; client: Cl
 /** Every user made by this test run, so clean-up finds them even if set-up fails halfway. */
 const createdUserIds: string[] = [];
 
-/** Creates a confirmed user and returns a client signed in as that user. */
-export async function createSignedInUser(admin: Client, label: string): Promise<TestUser> {
+/**
+ * Creates a confirmed user and returns a client signed in as that user. `userMetadata` stands in
+ * for what the sign-up form sends (for example the browser's time zone).
+ */
+export async function createSignedInUser(admin: Client, label: string, userMetadata?: Record<string, unknown>): Promise<TestUser> {
   const email = `rls-${label}-${randomUUID()}@example.com`;
   const password = `pw-${randomUUID()}`;
-  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: userMetadata });
   if (created.error || !created.data.user) {
     throw new Error(`could not create test user ${label}: ${created.error?.message}`);
   }
@@ -62,8 +65,8 @@ export type TestFamily = {
 };
 
 /** Signs a new parent in and creates their family the way the app does. */
-export async function createFamily(admin: Client, label: string): Promise<TestFamily> {
-  const user = await createSignedInUser(admin, label);
+export async function createFamily(admin: Client, label: string, userMetadata?: Record<string, unknown>): Promise<TestFamily> {
+  const user = await createSignedInUser(admin, label, userMetadata);
   const family = await user.client.rpc("ensure_family");
   if (family.error || !family.data) throw new Error(`ensure_family failed for ${label}: ${family.error?.message}`);
 

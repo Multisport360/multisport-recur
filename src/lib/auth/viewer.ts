@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { timeZoneOrDefault } from "@/lib/dates";
 import type { AthleteRow } from "@/lib/supabase/database.types";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -9,13 +10,22 @@ import { createServerSupabase } from "@/lib/supabase/server";
  *  - athlete: a login a parent invited for one athlete aged 13 or older. Sees only that athlete.
  *  - unlinked_athlete: an athlete login whose athlete was removed. Sees nothing.
  */
-export type GuardianViewer = { role: "guardian"; userId: string; email: string; familyId: string; guardianId: string };
-export type AthleteViewer = { role: "athlete"; userId: string; email: string; familyId: string; athleteId: string };
+/** `timeZone` is the family's IANA time zone: every date shown, and each training week, follows it. */
+export type GuardianViewer = { role: "guardian"; userId: string; email: string; familyId: string; guardianId: string; timeZone: string };
+export type AthleteViewer = { role: "athlete"; userId: string; email: string; familyId: string; athleteId: string; timeZone: string };
 export type UnlinkedAthleteViewer = { role: "unlinked_athlete"; userId: string; email: string };
 export type Viewer = GuardianViewer | AthleteViewer | UnlinkedAthleteViewer;
 
 /** Set by the server (never by the user) on logins created through a parent's invite. */
 export const ATHLETE_ROLE = "athlete";
+
+type ServerClient = Awaited<ReturnType<typeof createServerSupabase>>;
+
+async function familyTimeZone(supabase: ServerClient, familyId: string): Promise<string> {
+  const family = await supabase.from("families").select("timezone").eq("id", familyId).single();
+  if (family.error) throw new Error(`Could not look up the family: ${family.error.message}`);
+  return timeZoneOrDefault(family.data.timezone);
+}
 
 /** The signed-in viewer, or null when signed out. Looked up once per request. */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
@@ -29,7 +39,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const athlete = await supabase.from("athletes").select("id, family_id").eq("login_user_id", user.id).maybeSingle();
   if (athlete.error) throw new Error(`Could not look up the athlete login: ${athlete.error.message}`);
   if (athlete.data) {
-    return { role: "athlete", ...base, athleteId: athlete.data.id, familyId: athlete.data.family_id };
+    const timeZone = await familyTimeZone(supabase, athlete.data.family_id);
+    return { role: "athlete", ...base, athleteId: athlete.data.id, familyId: athlete.data.family_id, timeZone };
   }
   if (user.app_metadata?.role === ATHLETE_ROLE) {
     return { role: "unlinked_athlete", ...base };
@@ -42,7 +53,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const guardian = await supabase.from("guardians").select("id").eq("user_id", user.id).single();
   if (guardian.error) throw new Error(`Could not look up the guardian: ${guardian.error.message}`);
 
-  return { role: "guardian", ...base, familyId: family.data, guardianId: guardian.data.id };
+  const timeZone = await familyTimeZone(supabase, family.data);
+  return { role: "guardian", ...base, familyId: family.data, guardianId: guardian.data.id, timeZone };
 });
 
 function signInPath(next?: string): string {

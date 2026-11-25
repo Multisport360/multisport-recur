@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { timeZoneOrDefault } from "@/lib/dates";
 import { siteUrl } from "@/lib/env";
 import { failed, fieldErrors, formValues, type FormState } from "@/lib/forms";
 import { safeNextPath } from "@/lib/safe-redirect";
@@ -26,6 +27,8 @@ const signUpSchema = z.object({
   email,
   password: newPassword,
   isParent: z.literal("on", "Tick the box to confirm you're a parent or legal guardian aged 18 or older."),
+  // From the browser. Never shown, so a missing or unknown value quietly becomes America/New_York.
+  timezone: z.string().optional().transform(timeZoneOrDefault),
 });
 
 const signInSchema = z.object({
@@ -65,7 +68,11 @@ export async function signUp(_previous: FormState, form: FormData): Promise<Form
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { emailRedirectTo: `${siteUrl()}/auth/confirm?next=${encodeURIComponent(HOME_WHEN_SIGNED_IN)}` },
+    options: {
+      emailRedirectTo: `${siteUrl()}/auth/confirm?next=${encodeURIComponent(HOME_WHEN_SIGNED_IN)}`,
+      // ensure_family() copies this onto the family when the parent first signs in.
+      data: { timezone: parsed.data.timezone },
+    },
   });
   if (error) {
     console.error(`[auth] sign-up failed: ${error.code ?? "unknown"} ${error.message}`);
