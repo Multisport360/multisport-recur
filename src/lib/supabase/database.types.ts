@@ -117,6 +117,8 @@ export type PlanScreenAnswersRow = {
   throwing_arm_pain: boolean | null;
   has_training_age: boolean;
   season_phase: string;
+  /** 0–7 (7 = "7 or more"). Null on answers saved before the question existed. */
+  team_sessions_per_week: number | null;
   answered_by: string | null;
   answered_at: string;
 };
@@ -169,7 +171,7 @@ export type Database = {
       >;
       plan_screen_answers: Table<
         PlanScreenAnswersRow,
-        WithOptional<PlanScreenAnswersRow, "id" | "throwing_arm_pain" | "answered_by" | "answered_at">
+        WithOptional<PlanScreenAnswersRow, "id" | "throwing_arm_pain" | "team_sessions_per_week" | "answered_by" | "answered_at">
       >;
       plan_session_completions: Table<
         PlanSessionCompletionRow,

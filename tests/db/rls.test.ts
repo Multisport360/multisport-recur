@@ -354,6 +354,25 @@ describe("plan screen answers", () => {
     expect(attempt.error?.code).toBe(PERMISSION_DENIED);
   });
 
+  test("a parent saves the team practices and games count; it must be 0 to 7, and older answers have none", async () => {
+    const saved = await a
+      .from("plan_screen_answers")
+      .insert({ athlete_id: athleteA1.athleteId, ...SCREEN_ANSWERS, team_sessions_per_week: 3 })
+      .select("team_sessions_per_week")
+      .single();
+    expect(saved.error).toBeNull();
+    expect(saved.data?.team_sessions_per_week).toBe(3);
+
+    for (const count of [8, -1]) {
+      const attempt = await a.from("plan_screen_answers").insert({ athlete_id: athleteA1.athleteId, ...SCREEN_ANSWERS, team_sessions_per_week: count });
+      expect(attempt.error?.message, String(count)).toContain("plan_screen_answers_team_sessions_range");
+    }
+
+    const older = await a.from("plan_screen_answers").insert({ athlete_id: athleteA1.athleteId, ...SCREEN_ANSWERS }).select("team_sessions_per_week").single();
+    expect(older.error).toBeNull();
+    expect(older.data?.team_sessions_per_week).toBeNull();
+  });
+
   test("answers are never changed in place: a change is a new row", async () => {
     const update = await a.from("plan_screen_answers").update({ pain_now: true }).eq("athlete_id", athleteA1.athleteId);
     expect(update.error?.code).toBe(PERMISSION_DENIED);
