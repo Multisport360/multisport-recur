@@ -31,14 +31,19 @@ describe("headline", () => {
 
   test("at the top level: says it is the top level and where its numbers run to", () => {
     expect(headline(result(VELOCITY_QUERY, 93))).toBe(
-      "You're in D1 Power 4 range. D1 Power 4 is the top level in this guide. This guide's D1 Power 4 numbers run from 92 to 98 mph.",
+      "You're in D1 Power 4 range. D1 Power 4 is the top level. D1 Power 4 numbers run from 92 to 98 mph.",
     );
   });
 
   test("at the top level with no upper number: just says it is the top level", () => {
     const [set] = buildSets([row({ level: "Division 1", levelCode: "D1", entry: 84 })]);
     if (!set) throw new Error("fixture set not found");
-    expect(headline(compareToSet(set, 90))).toBe("You're in D1 range. D1 is the top level in this guide.");
+    expect(headline(compareToSet(set, 90))).toBe("You're in D1 range. D1 is the top level.");
+  });
+
+  test("never mentions a guide", () => {
+    for (const value of [70, 84, 93, 99]) expect(headline(result(VELOCITY_QUERY, value))).not.toMatch(/guide/i);
+    expect(screenReaderText(result(VELOCITY_QUERY, 99))).not.toMatch(/guide/i);
   });
 
   test("times use the same wording", () => {
@@ -73,7 +78,7 @@ describe("screenReaderText", () => {
   });
 
   test("at the top level", () => {
-    expect(screenReaderText(result(VELOCITY_QUERY, 96))).toBe("96 mph, D1 Power 4 range, the top level in this guide");
+    expect(screenReaderText(result(VELOCITY_QUERY, 96))).toBe("96 mph, D1 Power 4 range, the top level");
   });
 
   test("times are spoken in seconds", () => {

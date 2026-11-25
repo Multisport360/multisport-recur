@@ -13,9 +13,16 @@ type Props = {
   enterHref: string;
 };
 
-/** One metric in the report: its ruler(s), where the number came from, its history, and a way to add a new number. */
+/**
+ * One metric in the report: its ruler, where the number came from, its history, and a way to add
+ * a new number. When more than one guide has numbers for a metric, the family sees only the first
+ * one (the same one the summary, the history and the training plan use), so each level has one
+ * set of numbers.
+ */
 export function MetricBlock({ metric, subject, firstName, enterHref }: Props) {
   const source = metric.valueSource;
+  const comparison = metric.comparisons[0] ?? null;
+  const set = comparison?.set ?? metric.sets[0];
 
   return (
     <section data-testid="metric-block" data-metric={metric.metric} className="border-t-2 border-chalk py-4">
@@ -39,16 +46,7 @@ export function MetricBlock({ metric, subject, firstName, enterHref }: Props) {
               ? `Latest: ${formatDay(source.entry.measuredOn)}, ${measuredBy(source.entry.howMeasured)}.`
               : `From ${firstName}'s profile. Enter a measured number to replace it.`}
           </p>
-          {metric.sets.map((set, index) => (
-            <div key={set.id} className={index === 0 ? "" : "mt-4 border-t-2 border-chalk pt-3"}>
-              {index > 0 ? <p className="mb-2 font-bold">The same number on a second guide</p> : null}
-              <GapRuler
-                set={set}
-                comparison={metric.comparisons.find((comparison) => comparison.set.id === set.id) ?? null}
-                subject={subject}
-              />
-            </div>
-          ))}
+          {set ? <GapRuler set={set} comparison={comparison} subject={subject} /> : null}
           {metric.history.length > 1 ? <ProgressTable metric={metric} /> : null}
           <p className="mt-3">
             <Link href={enterHref} className="inline-block py-1">

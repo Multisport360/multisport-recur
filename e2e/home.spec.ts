@@ -82,9 +82,9 @@ test("typing a number moves the marker and updates the level, the gap and the sc
   // At the top level there is no gap, so the words say where that level's numbers run to.
   await typeNumber(page, "Fastball velocity (mph)", "84");
   await expect(result(first)).toHaveText(
-    "You're in D1 range. D1 is the top level in this guide. This guide's D1 numbers run from 84 to 95 mph.",
+    "You're in D1 range. D1 is the top level. D1 numbers run from 84 to 95 mph.",
   );
-  await expect(first.getByRole("img")).toHaveAccessibleName("84 mph, D1 range, the top level in this guide");
+  await expect(first.getByRole("img")).toHaveAccessibleName("84 mph, D1 range, the top level");
 
   await typeNumber(page, "Fastball velocity (mph)", "70");
   await expect(result(first)).toHaveText("You're 7 mph short of D3/NAIA range.");

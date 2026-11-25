@@ -16,12 +16,14 @@ async function addSport(page: Page, athleteId: string, sport: string, position: 
   await expect(page).toHaveURL(new RegExp(`/athletes/${athleteId}$`));
 }
 
-async function enterNumber(page: Page, metricBlock: string, value: string, date: string, how: string) {
+async function enterNumber(page: Page, metricBlock: string, value: string, date: string, how: string, { expectSaved = true } = {}) {
   await page.locator(`[data-metric="${metricBlock}"]`).getByRole("link", { name: /^(Enter|Add a new)/ }).click();
   await page.getByLabel(/\(/).fill(value);
   await page.getByLabel("Date measured").fill(date);
   await page.getByLabel("Who measured it").selectOption({ label: how });
   await page.getByRole("button", { name: "Save this number" }).click();
+  // Wait for the save, so a test that moves on straight away still finds the number on the report.
+  if (expectSaved) await expect(page.getByRole("status")).toContainText("Saved.");
 }
 
 async function signedInWithAthlete(page: Page, admin: Parameters<typeof addAthleteAsAdmin>[0], parent: E2eFamily, birthYear = THIS_YEAR - 16) {
@@ -82,7 +84,7 @@ test("entering numbers: every entry is a new row, the ruler shows the latest, an
 test("a future date is refused", async ({ page, admin, newParent }) => {
   const athleteId = await signedInWithAthlete(page, admin, await newParent("report-future"));
   await addSport(page, athleteId, "Baseball", "Pitcher");
-  await enterNumber(page, "Fastball velocity", "80", `${THIS_YEAR + 1}-01-01`, "We measured it ourselves");
+  await enterNumber(page, "Fastball velocity", "80", `${THIS_YEAR + 1}-01-01`, "We measured it ourselves", { expectSaved: false });
   await expect(page.getByText("The date can't be in the future.")).toBeVisible();
 });
 
@@ -131,4 +133,23 @@ test("no benchmark source is shown on the gap report, even inside the score card
   await expect(page.getByTestId("gap-ruler").first()).toBeVisible();
   for (const summary of await page.getByText("See every level's numbers").all()) await summary.click();
   await expectNoSources(page);
+});
+
+test("a metric with numbers from two guides shows one ruler and one set of numbers per level", async ({ page, admin, newParent }) => {
+  const parent = await newParent("report-one-guide");
+  const athleteId = await signedInWithAthlete(page, admin, parent);
+  await addSport(page, athleteId, "Baseball", "Pitcher");
+  await enterNumber(page, "Fastball velocity", "83", "2026-10-02", "A coach measured it");
+
+  await page.goto(`/athletes/${athleteId}`);
+  const block = page.locator('[data-metric="Fastball velocity"]');
+  await expect(block.getByTestId("gap-ruler")).toHaveCount(1);
+  await expect(block.getByText("See every level's numbers")).toHaveCount(1);
+  await block.getByText("See every level's numbers").click();
+  const levels = block.locator("tbody tr");
+  const levelNames = await levels.evaluateAll((rows) => rows.map((row) => row.querySelector("th, td")?.textContent?.trim() ?? ""));
+  expect(levelNames.length).toBeGreaterThan(0);
+  expect(new Set(levelNames).size).toBe(levelNames.length);
+  await expect(page.getByText(/second guide/i)).toHaveCount(0);
+  await expect(page.getByRole("main")).not.toContainText("in this guide");
 });

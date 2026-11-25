@@ -46,12 +46,12 @@ function thresholdHeadline(comparison: Comparison, subject: Subject): string {
 
   // At the top there is no gap to chase, so say where the level's own numbers run to.
   const top = comparison.reachedLevel;
-  const base = `${who} in ${reached} range. ${top?.label} is the top level in this guide.`;
+  const base = `${who} in ${reached} range. ${top?.label} is the top level.`;
   if (!top || top.elite === null) return base;
   if (comparison.set.better === "lower") {
-    return `${base} ${top.label} times in this guide run from ${formatValue(top.entry, unit)} down to ${formatValue(top.elite, unit)}.`;
+    return `${base} ${top.label} times run from ${formatValue(top.entry, unit)} down to ${formatValue(top.elite, unit)}.`;
   }
-  return `${base} This guide's ${top.label} numbers run from ${formatRange(top.entry, top.elite, unit)}.`;
+  return `${base} ${top.label} numbers run from ${formatRange(top.entry, top.elite, unit)}.`;
 }
 
 function rangeHeadline(comparison: Comparison, subject: Subject): string {
@@ -102,7 +102,7 @@ export function screenReaderText(comparison: Comparison): string {
   } else if (comparison.standing === "in_level" && reached && next && comparison.gap !== null) {
     parts.push(`${reached} range`, `${spokenValue(comparison.gap, unit)} short of ${next}`);
   } else {
-    parts.push(`${reached} range`, "the top level in this guide");
+    parts.push(`${reached} range`, "the top level");
   }
 
   if (isRoughGuide(comparison.confidence)) parts.push("rough guide");
