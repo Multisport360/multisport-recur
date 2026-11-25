@@ -46,7 +46,7 @@ export default async function HomePage() {
           <h2 className="text-[2.25rem]">What it costs</h2>
           <p className="mt-2 max-w-80">
             The gap report is free. The training plan is a paid subscription: {priceWithInterval()}, and you can cancel
-            online at any time. Every plan is reviewed by a coach before it goes live. Plans are still being written, so subscribers see &ldquo;your plan is coming&rdquo; until one is ready for their sport and position.
+            online at any time. Plans are built from training templates that a certified strength coach reviews before they go live. The templates are still being reviewed, so subscribers see &ldquo;your plan is coming&rdquo; until they&apos;re approved.
           </p>
         </section>
 

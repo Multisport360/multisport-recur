@@ -38,7 +38,7 @@ export function subscriptionStartedEmail(input: { price: string; renewsOn: strin
     text: sign([
       "Thanks for subscribing to the training plan.",
       `You pay ${input.price}. It renews automatically, and the next charge is on ${input.renewsOn}.`,
-      "Coach-reviewed plans are still being written. Your plan page will show your athlete's plan as soon as one is ready for their sport and position.",
+      "The training templates are still being reviewed by a certified strength coach. Your plan page will show your athlete's plan as soon as they're approved.",
       `To cancel, open your Account page and choose "Cancel my training plan". It takes two clicks:\n${accountLink()}`,
     ]),
   };

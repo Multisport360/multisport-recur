@@ -40,12 +40,13 @@ export default async function SubscribePage({ searchParams }: Props) {
 
       <h2 className="mt-4 text-[1.75rem]">What you get</h2>
       <p className="mt-1">
-        A training plan for each athlete&apos;s sport and position, written and reviewed by a coach, with safety notes on
-        every plan. The gap report stays free whether or not you subscribe.
+        A week-by-week training plan for each athlete, built from training templates a certified strength coach reviews and
+        aimed at the numbers with the biggest gap on their report. Safety notes sit at the top of every plan. The gap
+        report stays free whether or not you subscribe.
       </p>
       <p className="mt-2 border-l-4 border-infield-navy pl-2">
-        <strong>Plans are still being written.</strong> Until a coach-reviewed plan is ready for your athlete&apos;s sport
-        and position, the plan page will say it&apos;s coming. We never make up a plan to fill the gap.
+        <strong>The templates are still being reviewed.</strong> Until a coach has approved them, the plan page will say
+        your plan is coming. We never make up a plan to fill the gap.
       </p>
 
       <div className="mt-4">
