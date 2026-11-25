@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { addAthleteAsAdmin } from "../tests/db/helpers";
 import { expect, signIn, test, THIS_YEAR, type E2eFamily } from "./support/accounts";
+import { expectNoSources } from "./support/sources";
 
 /**
  * M5: sports, stat entries and the full gap report, against the real database.
@@ -117,4 +118,17 @@ test("football height uses the profile until a height is entered", async ({ page
   const height = page.locator('[data-metric="Height"]');
   await expect(height).toContainText("From Sam's profile. Enter a measured number to replace it.");
   await expect(height.getByTestId("ruler-result")).toContainText("Sam is inside the typical FCS range.");
+});
+
+test("no benchmark source is shown on the gap report, even inside the score cards", async ({ page, admin, newParent }) => {
+  const parent = await newParent("report-no-sources");
+  const athleteId = await signedInWithAthlete(page, admin, parent);
+  await addSport(page, athleteId, "Baseball", "Pitcher");
+  await enterNumber(page, "Fastball velocity", "83", "2026-10-02", "A coach measured it");
+  await addSport(page, athleteId, "Track & Field", "100m");
+
+  await page.goto(`/athletes/${athleteId}`);
+  await expect(page.getByTestId("gap-ruler").first()).toBeVisible();
+  for (const summary of await page.getByText("See every level's numbers").all()) await summary.click();
+  await expectNoSources(page);
 });

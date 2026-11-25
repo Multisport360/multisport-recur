@@ -1,13 +1,11 @@
-import { orderSurprises } from "@/lib/benchmarks/anomalies";
 import type { Comparison } from "@/lib/benchmarks/compare";
 import { headline, keepUnitsTogether, screenReaderText, type Subject } from "@/lib/benchmarks/describe";
-import { formatValue, metricInSentence } from "@/lib/benchmarks/format";
+import { formatValue } from "@/lib/benchmarks/format";
 import { isRoughGuide } from "@/lib/benchmarks/levels";
 import { buildRuler } from "@/lib/benchmarks/ruler";
 import type { BenchmarkSet } from "@/lib/benchmarks/sets";
 import { LevelDetails } from "./LevelDetails";
 import { RangeLanes } from "./RangeLanes";
-import { SourceLine } from "./SourceLine";
 import { ThresholdTape } from "./ThresholdTape";
 
 type Props = {
@@ -35,27 +33,6 @@ function splitLead(text: string): [string, string] {
   const bracketed = /^(.*) \((.+)\)\.$/.exec(lead);
   if (!bracketed) return [lead, rest];
   return [`${bracketed[1]}.`, [`That range is ${bracketed[2]}.`, rest].filter(Boolean).join(" ")];
-}
-
-/**
- * Plain-word notes about quirks in the guide's data, so the ruler never looks broken.
- * An out-of-order pair is only mentioned when it touches the level reached or the next one.
- */
-function guideNotes(set: BenchmarkSet, comparison: Comparison | null): string[] {
-  const shown = new Set([comparison?.reachedLevel?.levelCode, comparison?.nextLevel?.levelCode]);
-  const matters = (codes: readonly string[]) => comparison === null || codes.some((code) => shown.has(code as never));
-  const notes: string[] = [];
-  const [onlyLevel] = set.levels;
-  if (set.levels.length === 1 && onlyLevel) {
-    notes.push(`This guide only gives a ${metricInSentence(set.metric)} number for ${onlyLevel.label}, so there is one level on this ruler.`);
-  }
-  for (const { higher, lower } of orderSurprises(set)) {
-    if (!matters([higher.levelCode, lower.levelCode])) continue;
-    notes.push(
-      `In this guide, ${higher.label} asks for ${set.better === "lower" ? "a slower time" : "a lower number"} than ${lower.label} (${formatValue(higher.entry, set.unit)} against ${formatValue(lower.entry, set.unit)}). The ruler follows the guide.`,
-    );
-  }
-  return notes;
 }
 
 const OFF_SCALE_TEXT = {
@@ -100,17 +77,11 @@ export function GapRuler({ set, comparison, subject, emptyText = "Type a number 
             {valueLabel} {OFF_SCALE_TEXT[offScale]}
           </p>
         ) : null}
-        {guideNotes(set, comparison).map((note) => (
-          <p key={note} data-testid="guide-note" className="mt-1 max-w-80">
-            {keepUnitsTogether(note)}
-          </p>
-        ))}
         {showRoughNote ? (
           <p data-testid="rough-guide" className="mt-1 max-w-80">
             <strong>Rough guide.</strong> These numbers come from a less certain source, so treat the result as a ballpark.
           </p>
         ) : null}
-        <SourceLine set={set} />
         <LevelDetails set={set} />
       </figcaption>
     </figure>

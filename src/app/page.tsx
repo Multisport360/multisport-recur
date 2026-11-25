@@ -4,16 +4,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { priceWithInterval } from "@/config/billing";
 import { loadBenchmarkSets } from "@/lib/benchmarks/repository";
-import type { BenchmarkSet } from "@/lib/benchmarks/sets";
-import type { Source } from "@/lib/benchmarks/types";
 
 // The benchmarks rarely change, so the page is rebuilt at most every five minutes.
 export const revalidate = 300;
-
-function uniqueSources(sets: readonly BenchmarkSet[]): Source[] {
-  const byId = new Map(sets.flatMap((set) => set.sources).map((source) => [source.id, source] as const));
-  return [...byId.values()];
-}
 
 export default async function HomePage() {
   const benchmarks = await loadBenchmarkSets();
@@ -57,24 +50,13 @@ export default async function HomePage() {
           </p>
         </section>
 
-        {benchmarks.status === "ok" ? (
-          <section className="border-t-2 border-chalk py-5">
-            <h2 className="text-[2.25rem]">Where the numbers come from</h2>
-            <p className="mt-2 max-w-80">
-              Every number on a ruler comes from a published recruiting guide, and every ruler links to its guide. When
-              a guide is less certain, the ruler says &ldquo;rough guide&rdquo;.
-            </p>
-            <ul className="mt-2 max-w-80 list-disc space-y-0.5 pl-3">
-              {uniqueSources(benchmarks.sets).map((source) => (
-                <li key={source.id}>
-                  <a href={source.url} rel="noopener noreferrer" target="_blank">
-                    {source.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <section className="border-t-2 border-chalk py-5">
+          <h2 className="text-[2.25rem]">Where the numbers come from</h2>
+          <p className="mt-2 max-w-80">
+            Every number on a ruler comes from a published college recruiting guide. When a guide is less certain, the
+            ruler says &ldquo;rough guide&rdquo;.
+          </p>
+        </section>
       </main>
 
       <SiteFooter />

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expectNoSources } from "./support/sources";
 
 /**
  * The public home page: pick a sport, a position or event and a metric, type a number, see the ruler.
@@ -90,7 +91,7 @@ test("typing a number moves the marker and updates the level, the gap and the sc
   await expect(first.getByRole("img")).toHaveAccessibleName("70 mph, below D3/NAIA range, 7 mph short of D3/NAIA");
 });
 
-test("low-confidence benchmarks say rough guide and every ruler links to its source", async ({ page }) => {
+test("low-confidence benchmarks say rough guide, and the score card lists every level's numbers", async ({ page }) => {
   await page.goto("/");
   const [first, second] = [rulers(page).nth(0), rulers(page).nth(1)];
 
@@ -98,19 +99,24 @@ test("low-confidence benchmarks say rough guide and every ruler links to its sou
   await expect(second.getByTestId("rough-guide")).toContainText("Rough guide.");
   await expect(second.getByRole("img")).toHaveAccessibleName(/rough guide$/);
 
-  await expect(first.getByRole("link", { name: /NCSA/ }).first()).toHaveAttribute(
-    "href",
-    "https://www.ncsasports.org/baseball/recruiting-guidelines",
-  );
-  await expect(second.getByRole("link", { name: /D1 vs D2 vs D3 Baseball/ }).first()).toHaveAttribute("href", /^https:\/\//);
-
-  // The score card lists every level's numbers, then each level's source.
   await first.getByText("See every level's numbers").click();
   await expect(first.getByRole("row", { name: /^D1/ })).toHaveText(/D1\s*84 mph\s*95 mph/);
-  await expect(first.getByRole("listitem").filter({ hasText: "Division 1:" }).getByRole("link")).toHaveAttribute(
-    "href",
-    "https://www.ncsasports.org/baseball/recruiting-guidelines",
-  );
+});
+
+test("no benchmark source is shown on the home page, even inside the score cards", async ({ page }) => {
+  await page.goto("/");
+  await expectNoSources(page);
+
+  for (const summary of await page.getByText("See every level's numbers").all()) await summary.click();
+  await expectNoSources(page);
+
+  // A ruler built from four different sources.
+  await pick(page, "Sport", "Track & Field");
+  await pick(page, "Competes with", "Girls");
+  await pick(page, "Event", "100m");
+  await typeNumber(page, "100m (seconds)", "12.7");
+  await page.getByText("See every level's numbers").first().click();
+  await expectNoSources(page);
 });
 
 test("grades 8 to 11 see the senior-year targets note and seniors do not", async ({ page }) => {
@@ -126,7 +132,7 @@ test("grades 8 to 11 see the senior-year targets note and seniors do not", async
   await expect(note).toHaveCount(0);
 });
 
-test("track & field: girls' 100m puts four divisions on one ruler, each linked to its own source", async ({ page }) => {
+test("track & field: girls' 100m puts four divisions on one ruler", async ({ page }) => {
   await page.goto("/");
 
   await pick(page, "Sport", "Track & Field");
@@ -142,7 +148,8 @@ test("track & field: girls' 100m puts four divisions on one ruler, each linked t
   const ruler = rulers(page).first();
   await expect(result(ruler)).toHaveText("You're in D2 range. 0.2 sec to D1.");
   await expect(ruler.getByRole("img")).toHaveAccessibleName("12.7 seconds, D2 range, 0.2 seconds short of D1");
-  await expect(ruler.getByRole("link", { name: /Runcruit/ })).toHaveCount(4);
+  await ruler.getByText("See every level's numbers").click();
+  await expect(ruler.locator("tbody tr")).toHaveCount(4);
 });
 
 test("times can be typed as minutes and seconds", async ({ page }) => {
@@ -305,22 +312,13 @@ test("tick marks use one natural step per metric and say what it is", async ({ p
   await expect(page.getByTestId("tick-caption")).toHaveText(/^Each tick is \d+ (foot|feet)\.$/);
 });
 
-test("quirks in a guide's data are explained in words", async ({ page }) => {
+test("quirks in a guide's data no longer get an explanation line; the ruler stays as it is", async ({ page }) => {
   await page.goto("/");
-
-  // A guide that lists only one level says so.
   await pick(page, "Sport", "Football");
   await pick(page, "Position", "QB");
   await pick(page, "What was measured", "Vertical jump");
-  await expect(rulers(page).first().getByTestId("guide-note")).toContainText("only gives a vertical jump number for FBS");
-
-  // A guide whose numbers run against the usual order of levels says so.
-  await pick(page, "Sport", "Baseball");
-  await pick(page, "Position", "Outfield (corner)");
-  await pick(page, "What was measured", "60-yard dash");
-  await expect(rulers(page).first().getByTestId("guide-note").first()).toHaveText(
-    "In this guide, D2 asks for a slower time than D3/NAIA (7.0 sec against 6.9 sec). The ruler follows the guide.",
-  );
+  await expect(rulers(page).first().getByTestId("ruler-result")).toBeVisible();
+  await expect(page.getByText(/In this guide,|This guide only gives/)).toHaveCount(0);
 });
 
 test("a number past the end of the ruler says so and asks for a check", async ({ page }) => {
