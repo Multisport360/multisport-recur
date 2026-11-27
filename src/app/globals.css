@@ -174,3 +174,21 @@
     transform: translateX(0%);
   }
 }
+
+/*
+  Demo (/demo). A phone gets the app full screen. A laptop (wide, with a mouse) gets a 390 x 844 phone
+  frame with the same pages inside it, so the screens lay out exactly as on a phone.
+*/
+.demo-stage {
+  display: none;
+}
+
+@media (width >= 48rem) and (hover: hover) and (pointer: fine) {
+  .demo-app {
+    display: none;
+  }
+  .demo-stage {
+    display: flex;
+  }
+}
+

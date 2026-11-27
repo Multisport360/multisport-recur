@@ -1,6 +1,7 @@
 /**
  * Shown at the top of every page that uses a draft (not coach-reviewed) template library.
- * Drafts only ever appear in local development with ALLOW_DRAFT_PLANS=true.
+ * Drafts only ever appear in local development with ALLOW_DRAFT_PLANS=true, and in the demo
+ * (/demo, only when DEMO_MODE=true) for the sample athlete.
  */
 export function DraftBanner() {
   return (
