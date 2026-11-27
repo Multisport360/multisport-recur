@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { setSessionDone } from "@/lib/plan/actions";
+import type { SaveSessionDone } from "@/lib/plan/types";
 
 type Props = {
   athleteId: string;
@@ -11,10 +11,11 @@ type Props = {
   /** "Monday", for the label read out by screen readers. */
   dayName: string;
   isDone: boolean;
+  save: SaveSessionDone;
 };
 
 /** "Mark this session done". Saves as soon as it is ticked or unticked; says so if it didn't save. */
-export function SessionDone({ athleteId, blockStart, week, day, dayName, isDone }: Props) {
+export function SessionDone({ athleteId, blockStart, week, day, dayName, isDone, save }: Props) {
   const [optimisticDone, setOptimisticDone] = useOptimistic(isDone);
   const [problem, setProblem] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -24,7 +25,7 @@ export function SessionDone({ athleteId, blockStart, week, day, dayName, isDone 
     setProblem(null);
     startTransition(async () => {
       setOptimisticDone(done);
-      const result = await setSessionDone(athleteId, blockStart, week, day, done);
+      const result = await save(athleteId, blockStart, week, day, done);
       if (!result.ok) setProblem(result.message);
     });
   }

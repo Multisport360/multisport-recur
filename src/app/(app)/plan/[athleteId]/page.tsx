@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DraftBanner } from "@/components/plan/DraftBanner";
-import { PlanView } from "@/components/plan/PlanView";
+import { appPlanLinks } from "@/components/plan/PlanView";
+import { TrainingPlanView } from "@/components/plan/TrainingPlanView";
 import { findAthlete, requireViewer } from "@/lib/auth/viewer";
 import { loadPlanAccess } from "@/lib/billing/queries";
 import { hasPlanAccess } from "@/lib/billing/subscription";
 import { formatDayIn } from "@/lib/dates";
 import { gradeFromGradYear } from "@/lib/grade";
 import { blockPosition, isRetestWeek, weekToShow } from "@/lib/plan/block";
+import { setSessionDone } from "@/lib/plan/actions";
 import { buildPlan } from "@/lib/plan/builder";
 import { completeAnswers, loadAthleteGaps, loadCompletions, loadPlanLibrary, loadScreens } from "@/lib/plan/queries";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -97,31 +99,31 @@ export default async function AthletePlanPage({ params, searchParams }: Props) {
   const done = await loadCompletions(supabase, athlete.id, position.blockStart);
 
   return (
-    <div className="max-w-80">
-      {banner}
-      <h1 className="text-[2.75rem]">{heading}</h1>
-      {answersSaved ? (
-        <p role="status" className="mt-2 border-l-4 border-infield-navy pl-2 font-bold">
-          Saved. The plan below uses the new answers.
-        </p>
-      ) : null}
-      {answeredLine}
-      {benchmarksDown ? (
-        <p role="alert" className="mt-2 border-l-4 border-infield-navy pl-2 font-bold">
-          The benchmarks can&apos;t be loaded right now, so this plan has no focus work. Reload in a few minutes.
-        </p>
-      ) : null}
-      <PlanView
-        athleteId={athlete.id}
-        firstName={name}
-        plan={plan}
-        sports={sports}
-        blockStart={position.blockStart}
-        currentWeek={position.week}
-        shownWeek={shownWeek}
-        done={done}
-        isRetestWeek={isRetestWeek(position.week) && shownWeek === position.week}
-      />
-    </div>
+    <TrainingPlanView
+      banners={banner}
+      heading={heading}
+      notices={
+        answersSaved ? (
+          <p role="status" className="mt-2 border-l-4 border-infield-navy pl-2 font-bold">
+            Saved. The plan below uses the new answers.
+          </p>
+        ) : null
+      }
+      answeredLine={answeredLine}
+      benchmarksDown={benchmarksDown}
+      plan={{
+        athleteId: athlete.id,
+        links: appPlanLinks(athlete.id),
+        saveSessionDone: setSessionDone,
+        firstName: name,
+        plan,
+        sports,
+        blockStart: position.blockStart,
+        currentWeek: position.week,
+        shownWeek,
+        done,
+        isRetestWeek: isRetestWeek(position.week) && shownWeek === position.week,
+      }}
+    />
   );
 }

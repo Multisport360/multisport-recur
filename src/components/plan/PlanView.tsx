@@ -1,15 +1,29 @@
 import Link from "next/link";
 import { formatValue, metricInSentence } from "@/lib/benchmarks/format";
-import { weekStatus } from "@/lib/plan/block";
+import { sessionKey, weekStatus } from "@/lib/plan/block";
 import { teamScheduleFullText, teamSessionsText } from "@/lib/plan/rules";
 import { DAY_NAMES } from "@/lib/plan/schedule";
-import { sessionKey } from "@/lib/plan/queries";
-import type { BuiltPlan, PlanItem, PlanWeek, Session } from "@/lib/plan/types";
+import type { BuiltPlan, PlanItem, PlanWeek, SaveSessionDone, Session } from "@/lib/plan/types";
 import type { AthleteSport } from "@/lib/report/queries";
 import { SessionDone } from "./SessionDone";
 
+/** Where the plan's links go: the signed-in app, or the demo's own screens. */
+export type PlanLinks = {
+  week: (week: number) => string;
+  logStat: (athleteSportId: string, metric: string) => string;
+};
+
+/** The signed-in app's plan links. */
+export function appPlanLinks(athleteId: string): PlanLinks {
+  return {
+    week: (week) => `/plan/${athleteId}?week=${week}`,
+    logStat: (athleteSportId, metric) => `/athletes/${athleteId}/stats/new?sport=${athleteSportId}&metric=${encodeURIComponent(metric)}`,
+  };
+}
+
 type Props = {
   athleteId: string;
+  links: PlanLinks;
   firstName: string;
   plan: BuiltPlan;
   sports: AthleteSport[];
@@ -18,6 +32,8 @@ type Props = {
   shownWeek: number;
   done: Set<string>;
   isRetestWeek: boolean;
+  /** Saves "Mark this session done". */
+  saveSessionDone: SaveSessionDone;
 };
 
 const SECTION = "mt-5 border-t-2 border-chalk pt-3";
@@ -102,7 +118,7 @@ function FocusSummary({ plan, firstName }: Props) {
   );
 }
 
-function RetestPrompt({ plan, athleteId, sports }: Props) {
+function RetestPrompt({ plan, links, sports }: Props) {
   const targets = plan.modules.flatMap((mod) => mod.gaps);
   return (
     <section data-testid="retest-prompt" className="mt-3 border-l-4 border-track-blue pl-2">
@@ -115,7 +131,7 @@ function RetestPrompt({ plan, athleteId, sports }: Props) {
             if (!sport) return null;
             return (
               <li key={`${sport.id}-${gap.metric}`}>
-                <Link href={`/athletes/${athleteId}/stats/new?sport=${sport.id}&metric=${encodeURIComponent(gap.metric)}`} className="inline-block py-1">
+                <Link href={links.logStat(sport.id, gap.metric)} className="inline-block py-1">
                   Log a new {metricInSentence(gap.metric)}
                 </Link>
               </li>
@@ -127,7 +143,7 @@ function RetestPrompt({ plan, athleteId, sports }: Props) {
   );
 }
 
-function WeekNav({ plan, athleteId, firstName, currentWeek, shownWeek, done }: Props) {
+function WeekNav({ plan, links, firstName, currentWeek, shownWeek, done }: Props) {
   const total = plan.weeks.reduce((count, week) => count + week.days.filter((day) => day.session).length, 0);
   const status = weekStatus(shownWeek, currentWeek);
   return (
@@ -142,7 +158,7 @@ function WeekNav({ plan, athleteId, firstName, currentWeek, shownWeek, done }: P
       ) : null}
       <p data-testid="week-status" className="mt-1 tabular-nums">
         {status.text}{" "}
-        {status.isCurrent ? null : <Link href={`/plan/${athleteId}?week=${currentWeek}`}>Go to week {currentWeek}</Link>}
+        {status.isCurrent ? null : <Link href={links.week(currentWeek)}>Go to week {currentWeek}</Link>}
       </p>
       {total > 0 ? (
         <p data-testid="completed-count" className="mt-1 tabular-nums">
@@ -154,7 +170,7 @@ function WeekNav({ plan, athleteId, firstName, currentWeek, shownWeek, done }: P
           {plan.weeks.map((week) => (
             <li key={week.week}>
               <Link
-                href={`/plan/${athleteId}?week=${week.week}`}
+                href={links.week(week.week)}
                 aria-current={week.week === shownWeek ? "page" : undefined}
                 className={`inline-flex min-h-6 items-center tabular-nums ${week.week === shownWeek ? "font-bold text-infield-navy no-underline" : ""}`}
               >
@@ -202,7 +218,7 @@ function WeekTable({ week, done }: { week: PlanWeek; done: Set<string> }) {
   );
 }
 
-function DayDetail({ week, day, session, athleteId, blockStart, done }: Props & { week: PlanWeek; day: number; session: Session }) {
+function DayDetail({ week, day, session, athleteId, blockStart, done, saveSessionDone }: Props & { week: PlanWeek; day: number; session: Session }) {
   const dayName = DAY_NAMES[day as 0] as string;
   return (
     <section id={`day-${day}`} data-testid="plan-day" className={SECTION} aria-labelledby={`day-${day}-heading`}>
@@ -220,7 +236,7 @@ function DayDetail({ week, day, session, athleteId, blockStart, done }: Props & 
         </div>
       ))}
       <div className="mt-2">
-        <SessionDone athleteId={athleteId} blockStart={blockStart} week={week.week} day={day} dayName={dayName} isDone={done.has(sessionKey(week.week, day))} />
+        <SessionDone athleteId={athleteId} blockStart={blockStart} week={week.week} day={day} dayName={dayName} isDone={done.has(sessionKey(week.week, day))} save={saveSessionDone} />
       </div>
     </section>
   );

@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { StatForm } from "@/components/report/ReportForms";
+import { EnterNumberView } from "@/components/report/EnterNumberView";
 import { findAthlete, requireViewer } from "@/lib/auth/viewer";
-import { inputGuide } from "@/lib/benchmarks/format";
 import { loadBenchmarkSets } from "@/lib/benchmarks/repository";
-import { findSets, listMetrics } from "@/lib/benchmarks/sets";
-import { HOW_MEASURED } from "@/lib/report/build";
-import { listAthleteSports } from "@/lib/report/queries";
 import { calendarDay } from "@/lib/dates";
-import { HOW_MEASURED_LABELS } from "@/lib/stats/rules";
+import { listAthleteSports } from "@/lib/report/queries";
+import { addStat } from "@/lib/stats/actions";
+import { chosenMetric, metricChoices } from "@/lib/stats/metric-choices";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Enter a number" };
@@ -32,30 +29,16 @@ export default async function EnterNumberPage({ params, searchParams }: Props) {
   const benchmarks = await loadBenchmarkSets();
   if (benchmarks.status !== "ok") redirect(`/athletes/${id}`);
 
-  const query = { sport: sport.sport, positionOrEvent: sport.positionOrEvent, gender: athlete.gender };
-  const metrics = listMetrics(benchmarks.sets, query).map((option) => {
-    const typical = findSets(benchmarks.sets, { ...query, metric: option.metric })[0]?.levels[0]?.entry;
-    return { metric: option.metric, ...inputGuide(option.unit, typical) };
-  });
-  const initialMetric = metrics.some((option) => option.metric === wantedMetric) ? (wantedMetric as string) : (metrics[0]?.metric ?? "");
+  const metrics = metricChoices(benchmarks.sets, { sport: sport.sport, positionOrEvent: sport.positionOrEvent, gender: athlete.gender });
 
   return (
-    <div className="max-w-60">
-      <h1 className="text-[2.75rem]">Enter a number</h1>
-      <p className="mt-2 mb-4">
-        {sport.sport}, {sport.positionOrEvent}. Earlier numbers stay in the history, so you can see progress over time.
-      </p>
-      <StatForm
-        athleteId={athlete.id}
-        athleteSportId={sport.id}
-        metrics={metrics}
-        initialMetric={initialMetric}
-        today={calendarDay(new Date(), viewer.timeZone)}
-        howMeasured={HOW_MEASURED.map((how) => ({ value: how, label: HOW_MEASURED_LABELS[how] }))}
-      />
-      <p className="mt-4">
-        <Link href={`/athletes/${athlete.id}`}>Back to the report</Link>
-      </p>
-    </div>
+    <EnterNumberView
+      sportLabel={`${sport.sport}, ${sport.positionOrEvent}`}
+      metrics={metrics}
+      initialMetric={chosenMetric(metrics, wantedMetric)}
+      today={calendarDay(new Date(), viewer.timeZone)}
+      action={addStat.bind(null, athlete.id, sport.id)}
+      backHref={`/athletes/${athlete.id}`}
+    />
   );
 }

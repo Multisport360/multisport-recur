@@ -57,6 +57,11 @@ export type Session = {
   blocks: SessionBlock[];
 };
 
+export type SessionDoneResult = { ok: true } | { ok: false; message: string };
+
+/** Saves "Mark this session done". The setSessionDone Server Action in the app; browser memory in the demo. */
+export type SaveSessionDone = (athleteId: string, blockStart: string, week: number, day: number, done: boolean) => Promise<SessionDoneResult>;
+
 /** 0 = Monday ... 6 = Sunday. */
 export type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 

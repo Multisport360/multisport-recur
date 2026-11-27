@@ -5,6 +5,7 @@ import { buildSportReport } from "@/lib/report/build";
 import { listAthleteSports, listStatEntries, type AthleteSport } from "@/lib/report/queries";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import type { AthleteRow, Database } from "@/lib/supabase/database.types";
+import { sessionKey } from "./block";
 import { gapsFromReports } from "./gaps";
 import { draftPlansAllowed, libraryFromRecord, pickLibrary, type LoadedLibrary, type PlanTemplateRecord } from "./library";
 import { SEASON_PHASES, type SeasonPhase } from "./library-schema";
@@ -110,10 +111,6 @@ export async function loadCompletions(supabase: Client, athleteId: string, block
     .eq("block_start", blockStart);
   if (error) throw new Error(`Could not load finished sessions: ${error.message}`);
   return new Set(data.map((row) => sessionKey(row.week, row.day)));
-}
-
-export function sessionKey(week: number, day: number): string {
-  return `${week}-${day}`;
 }
 
 export type AthletePlanData = { sports: AthleteSport[]; gaps: StatGap[]; benchmarksDown: boolean };

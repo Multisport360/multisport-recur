@@ -12,6 +12,9 @@ export type FormState = {
 
 export const EMPTY_FORM_STATE: FormState = { message: null, fields: {}, values: {} };
 
+/** A form's action for useActionState: a Server Action in the app, or a plain function in the demo. */
+export type FormAction = (previous: FormState, form: FormData) => FormState | Promise<FormState>;
+
 /** The first problem zod found for each field. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const fields: Record<string, string> = {};

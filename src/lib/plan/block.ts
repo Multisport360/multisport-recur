@@ -53,6 +53,11 @@ export function blockPosition(firstAnsweredAt: Date, today: Date, timeZone: stri
   };
 }
 
+/** The key for one session in the set of sessions marked done. */
+export function sessionKey(week: number, day: number): string {
+  return `${week}-${day}`;
+}
+
 /** Week 6 is the retest week: the parent is asked to retest and log the new number. */
 export function isRetestWeek(week: number): boolean {
   return week === WEEKS_PER_BLOCK;

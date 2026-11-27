@@ -10,6 +10,7 @@ import { listAthleteSports } from "@/lib/report/queries";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { WEEKS_PER_BLOCK } from "./block";
 import { screenFormSchema } from "./screen-form";
+import type { SessionDoneResult } from "./types";
 
 /**
  * Saving the plan questions and "Mark this session done". Both need an active subscription:
@@ -49,8 +50,6 @@ export async function saveScreens(athleteId: string, _previous: FormState, form:
   }
   redirect(`/plan/${athlete.id}?answers=saved`);
 }
-
-export type SessionDoneResult = { ok: true } | { ok: false; message: string };
 
 /** Ticks or unticks one session. A parent or the athlete's own login can do this. */
 export async function setSessionDone(athleteId: string, blockStart: string, week: number, day: number, done: boolean): Promise<SessionDoneResult> {
