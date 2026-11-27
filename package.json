@@ -22,7 +22,8 @@
     "plans:check": "node scripts/seed-plan-templates.ts --check",
     "plans:seed": "node --env-file=.env.local scripts/seed-plan-templates.ts",
     "db:push": "node --env-file=.env.local scripts/db-push.ts",
-    "screenshots": "node --env-file=.env.local scripts/screenshots.ts"
+    "screenshots": "node --env-file=.env.local scripts/screenshots.ts",
+    "screenshots:demo": "node scripts/screenshots-demo.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",

@@ -11,6 +11,10 @@ const PORT = 3100;
 // A second, `next dev` server for the one test that must see draft (not coach-reviewed) plans.
 const DEV_PORT = 3102;
 process.env.E2E_DEV_PORT = String(DEV_PORT);
+// A third server: the same production build with DEMO_MODE=true, like the Vercel rebuild preview.
+// The first server has no DEMO_MODE, so it proves /demo is a 404 without it.
+const DEMO_PORT = 3104;
+process.env.E2E_DEMO_PORT = String(DEMO_PORT);
 // Set E2E_BASE_URL to test a server that is already running (for example a Vercel preview).
 const EXTERNAL_URL = process.env.E2E_BASE_URL;
 const BASE_URL = EXTERNAL_URL ?? `http://localhost:${PORT}`;
@@ -47,6 +51,14 @@ export default defineConfig({
           env: { ALLOW_DRAFT_PLANS: "true" },
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,
+        },
+        {
+          // Starts after the build above has finished: Playwright starts these servers one at a time.
+          command: `npm run start -- -p ${DEMO_PORT}`,
+          url: `http://localhost:${DEMO_PORT}/demo`,
+          env: { DEMO_MODE: "true" },
+          reuseExistingServer: !process.env.CI,
+          timeout: 60_000,
         },
         {
           // Local development with drafts allowed. Stripe sends the browser back to this server.

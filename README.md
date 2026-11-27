@@ -122,6 +122,7 @@ Events the webhook handles: `checkout.session.completed`, `customer.subscription
 4. In Supabase, add your Vercel domain to Authentication, URL Configuration (step 3 of "Supabase settings").
 5. Run `npm run db:push` and `npm run db:seed` once against the production Supabase project (with that project's keys in `.env.local`).
 6. Run the end-to-end tests against a preview deployment if you like: `E2E_BASE_URL=https://your-preview.vercel.app npm run test:e2e`.
+7. Demo on the `rebuild` preview only: add `DEMO_MODE` = `true` with the **Preview** environment and the branch `rebuild` selected (never Production), then redeploy. Keep Settings, Deployment Protection, Vercel Authentication on (Standard Protection), and share the demo with a Sharable Link from the deployment's Share button.
 
 ## Training plans
 
@@ -143,6 +144,25 @@ Plans are built by plain TypeScript in `src/lib/plan/` (no AI) from one template
 - Each family has a `timezone` (IANA name from the parent's browser at sign-up; America/New_York for families made before). Dates shown in the app and emails, today's date on the stat form, and the Monday each 6-week block starts all use it. Code: `src/lib/dates.ts`.
 - `plan_screen_answers` keeps every set of answers to the 4 plan questions (the newest counts). `plan_session_completions` keeps the "Mark this session done" ticks.
 - `src/lib/plan/metric-map.ts` links each benchmark metric to the template's stat names; a unit test fails if a metric in `data/benchmarks.csv` has no mapping.
+
+## Clickable demo (`/demo`)
+
+A no-sign-in demo of the app for showing people on a phone. It uses the real report, stats form, plan and
+account screens, fed from a sample family (Demo Parent and Jordan, class of 2028: baseball pitcher and
+football WR) kept in the browser tab. Adding a number moves the ruler. Refreshing or "Restart demo" starts over.
+It never calls Supabase, Stripe, Resend or the Claude API, and checkout and cancel show
+"Payments are skipped in the demo".
+
+- On only when `DEMO_MODE=true`, and never when `VERCEL_ENV=production`. Otherwise `/demo` is a 404.
+- Benchmarks come from `data/benchmarks.csv`. The plan uses the draft templates in `data/plan_templates.draft.json`,
+  with "Demo, sample athlete" and "Sample plan, not coach-reviewed" banners. The real app still ignores drafts.
+- Phone: full screen with a bottom tab bar, and it can be added to the home screen. Laptop: shown in a phone frame.
+
+```bash
+npm run build
+DEMO_MODE=true npm run start -- -p 3104      # then open http://localhost:3104/demo
+npm run screenshots:demo -- http://localhost:3104   # pictures in screenshots/demo/
+```
 
 ## Decisions still open (placeholders in the code)
 

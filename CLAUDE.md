@@ -75,6 +75,7 @@ Tables: families, guardians, consents, athletes, athlete_sports, stat_entries, b
 
 ## Benchmark rules
 - Benchmarks come only from the benchmarks table. The AI never invents, edits or estimates a benchmark.
+  - Demo exception: the clickable demo at `/demo` (only when `DEMO_MODE=true`, never on Vercel production) reads the same rows straight from `data/benchmarks.csv`, because it never touches Supabase.
 - All comparisons are plain TypeScript functions with unit tests. `better = lower` means smaller is better (times); `higher` means bigger is better; `range` is height/weight.
 - Rows with confidence "Low" are labelled "rough guide". Benchmark sources are stored in the sources table but are not shown in the app. They will be shown on the public website later.
 - Until on-pace targets exist, athletes in grades 8–11 see "These are senior-year targets."
