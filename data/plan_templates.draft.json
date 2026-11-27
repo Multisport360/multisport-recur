@@ -1,0 +1,310 @@
+{
+  "version": "draft-2026-11-17",
+  "review_status": "draft",
+  "review_note": "Written from published youth training guidelines for a certified strength coach (CSCS) to review. Not coach-reviewed. Must never be shown to families as a real plan until review_status is 'approved'.",
+
+  "tiers": {
+    "foundation": {
+      "label": "Foundation",
+      "who": "All 8th graders, and any athlete with less than 1 year of supervised strength training.",
+      "strength_days_per_week": 2,
+      "rules": [
+        "Strength days on non-consecutive days.",
+        "Technique first: an exercise only gets heavier when every rep looks the same.",
+        "No max-effort lifts and no 1-rep-max testing."
+      ]
+    },
+    "development": {
+      "label": "Development",
+      "who": "9th–12th graders with at least 1 year of supervised strength training and good technique on the main lifts.",
+      "strength_days_per_week": 3,
+      "rules": [
+        "Strength days on non-consecutive days.",
+        "Heavier sets stop 2–3 reps short of failure.",
+        "No 1-rep-max testing inside the app."
+      ]
+    }
+  },
+
+  "block": {
+    "weeks": 6,
+    "progression": "Weeks 1–2 learn the movements at the listed low end. Weeks 3–4 add a set or a little load if technique held. Week 5 is the hardest week. Week 6 drops volume by about a third so the athlete can retest.",
+    "retest": "Retest the target stat at the end of week 6 and log it as a new entry."
+  },
+
+  "season_phases": {
+    "off_season": "Full plan.",
+    "pre_season": "Full plan, but strength work drops to the low end of the sets listed.",
+    "in_season": "Strength days drop to 1–2 per week at the low end of the sets listed. Speed and power work stays short and crisp. No added throwing volume for pitchers.",
+    "rest_period": "Baseball only. The yearly break from throwing (Pitch Smart). The throwing parts of every plan are removed; strength and movement work stays."
+  },
+
+  "screens": [
+    {
+      "id": "pain_now",
+      "question": "Does the athlete have pain right now that changes how they move, throw or run?",
+      "if_yes": "No plan. Show: 'Get this checked by a doctor or athletic trainer before starting a training plan.'"
+    },
+    {
+      "id": "throwing_arm_pain",
+      "question": "Baseball only: any pain in the throwing shoulder or elbow in the last month?",
+      "if_yes": "Remove all throwing work from the plan and show: 'Have the arm checked by a doctor or athletic trainer before adding throwing.'"
+    },
+    {
+      "id": "training_age",
+      "question": "Has the athlete done at least a year of strength training with a coach watching their technique?",
+      "if_no": "Use the Foundation tier."
+    },
+    {
+      "id": "season_phase",
+      "question": "Where is the athlete in their season for this sport? (off-season, pre-season, in-season, or — baseball only — their yearly break from throwing)"
+    },
+    {
+      "id": "team_sessions",
+      "question": "How many team practices or games does the athlete have in a typical week?",
+      "rule": "Each practice or game counts as one hard day toward the tier's weekly limit. Strength days are dropped (C first, then B, then A) when the team schedule leaves no room for them."
+    }
+  ],
+
+  "warmup": {
+    "id": "warmup",
+    "name": "Warm-up (every session, about 10 minutes)",
+    "items": [
+      {"name": "Easy jog or skips", "dose": "2–3 minutes"},
+      {"name": "Walking lunges with reach", "dose": "6 each leg"},
+      {"name": "Leg swings, front and side", "dose": "8 each leg"},
+      {"name": "A-skips", "dose": "2 × 15 m"},
+      {"name": "Build-up runs to about 80% speed", "dose": "2–3 × 20 m"}
+    ]
+  },
+
+  "strength_days": {
+    "strength_a": {
+      "name": "Strength A",
+      "exercises": [
+        {"name": "Squat (goblet squat in Foundation, front or back squat in Development)", "foundation": "2–3 × 8–10", "development": "3–4 × 4–6", "rest": "1–2 min (Foundation), 2–3 min (Development)", "cue": "Chest up, knees track over toes, full depth you can control."},
+        {"name": "Push-up (Foundation) / dumbbell bench press (Development)", "foundation": "2–3 × 8–12", "development": "3 × 6–8", "rest": "1–2 min", "cue": "Body straight, elbows about 45° from the body."},
+        {"name": "Inverted row (Foundation) / dumbbell row (Development)", "foundation": "2–3 × 8–12", "development": "3 × 8–10 each arm", "rest": "1–2 min", "cue": "Pull the elbow to the hip, pause at the top."},
+        {"name": "Split squat", "foundation": "2 × 8 each leg", "development": "3 × 6–8 each leg", "rest": "1 min", "cue": "Front knee stays over the foot."},
+        {"name": "Nordic hamstring curl (partner-held, lower slowly)", "foundation": "1–2 × 3–5", "development": "2–3 × 4–6", "rest": "1–2 min", "cue": "Lower as slowly as you can, catch yourself with your hands."},
+        {"name": "Side plank", "foundation": "2 × 20 s each side", "development": "3 × 30 s each side", "rest": "30 s", "cue": "Straight line from head to feet."}
+      ]
+    },
+    "strength_b": {
+      "name": "Strength B",
+      "exercises": [
+        {"name": "Romanian deadlift (dumbbells in Foundation, trap bar or barbell in Development)", "foundation": "2–3 × 8–10", "development": "3–4 × 5–6", "rest": "1–2 min (Foundation), 2–3 min (Development)", "cue": "Push hips back, flat back, bar close to the legs."},
+        {"name": "Step-up", "foundation": "2 × 8 each leg", "development": "3 × 6 each leg", "rest": "1 min", "cue": "Drive through the whole front foot; don't push off the back leg."},
+        {"name": "Half-kneeling one-arm dumbbell press", "foundation": "2 × 8 each arm", "development": "3 × 6–8 each arm", "rest": "1 min", "cue": "Ribs down, press straight up."},
+        {"name": "Pull-up or band-assisted pull-up", "foundation": "2 × 5–8", "development": "3 × 5–8", "rest": "1–2 min", "cue": "Full hang to chin over bar."},
+        {"name": "Dead bug", "foundation": "2 × 8 each side", "development": "3 × 10 each side", "rest": "30 s", "cue": "Low back stays pressed to the floor."}
+      ]
+    },
+    "strength_c": {
+      "name": "Strength C (Development only)",
+      "exercises": [
+        {"name": "Trap bar deadlift", "development": "3 × 4–5", "rest": "2–3 min", "cue": "Stand tall fast; lower under control."},
+        {"name": "Rear-foot-elevated split squat", "development": "3 × 6 each leg", "rest": "1–2 min", "cue": "Most of the weight on the front leg."},
+        {"name": "Dumbbell incline press", "development": "3 × 8", "rest": "1–2 min", "cue": "Smooth reps, no bouncing."},
+        {"name": "Chest-supported row", "development": "3 × 10", "rest": "1 min", "cue": "Squeeze shoulder blades together."},
+        {"name": "Pallof press", "development": "3 × 10 each side", "rest": "30 s", "cue": "Don't let the band turn you."}
+      ]
+    }
+  },
+
+  "focus_modules": [
+    {
+      "id": "speed",
+      "name": "Sprint speed",
+      "for_stats": ["40-yard dash", "60-yard dash", "100 m", "200 m"],
+      "goal": "Faster first steps and higher top speed.",
+      "added_to": "The start of every strength day, right after the warm-up, while fresh.",
+      "work": [
+        {"name": "Acceleration sprints from a 2-point or 3-point start", "foundation": "5–6 × 10–15 m", "development": "6–8 × 10–20 m", "rest": "Walk back plus about 1 min per 10 m"},
+        {"name": "Flying sprints (build up 15–20 m, sprint 10–20 m)", "foundation": "2–3 reps", "development": "3–5 reps", "rest": "2–3 min"},
+        {"name": "Light sled or partner-resisted sprints (optional, only if equipment is available)", "foundation": "none", "development": "4–6 × 10–15 m, light load", "rest": "2 min"}
+      ],
+      "notes": [
+        "Every rep is full effort with full rest. If times slow down, the session is over.",
+        "Run on a surface with good grip; no sprinting on wet grass in cleats that slip."
+      ],
+      "evidence": ["S8", "S9", "S10", "S11"]
+    },
+    {
+      "id": "power",
+      "name": "Jumping power",
+      "for_stats": ["Vertical jump", "Broad jump", "Long jump", "High jump"],
+      "goal": "More force in less time off the ground.",
+      "added_to": "Strength A and Strength B, before the lifts.",
+      "work": [
+        {"name": "Box jump (step down, don't jump down)", "foundation": "3 × 3–4", "development": "3–4 × 4", "rest": "1 min"},
+        {"name": "Broad jump, stick the landing", "foundation": "3 × 3", "development": "3–4 × 3–4", "rest": "1 min"},
+        {"name": "Pogo hops", "foundation": "2 × 10", "development": "3 × 15", "rest": "45 s"},
+        {"name": "Single-leg hop and stick", "foundation": "2 × 3 each leg", "development": "3 × 4 each leg", "rest": "45 s"},
+        {"name": "Medicine ball scoop toss for height (4–6 kg)", "foundation": "none", "development": "3 × 3", "rest": "1 min"}
+      ],
+      "notes": [
+        "Count foot contacts. Foundation stays around 40–60 per session; Development around 60–100.",
+        "Landings are quiet with knees over toes. Sloppy landings end the set."
+      ],
+      "evidence": ["S8", "S1"]
+    },
+    {
+      "id": "agility",
+      "name": "Change of direction",
+      "for_stats": ["Pro agility (5-10-5) shuttle"],
+      "goal": "Stop and restart faster.",
+      "added_to": "Strength A and Strength B, after the warm-up.",
+      "work": [
+        {"name": "Deceleration drill: sprint 10 m, stop in 3 steps, hold", "foundation": "4 reps", "development": "6 reps", "rest": "1 min"},
+        {"name": "5-10-5 shuttle at full speed", "foundation": "3 reps", "development": "4–5 reps", "rest": "2 min"},
+        {"name": "Lateral bound and stick", "foundation": "2 × 4 each side", "development": "3 × 5 each side", "rest": "45 s"}
+      ],
+      "notes": ["Low hips on every cut; touch the line with the hand on the turning side."],
+      "evidence": ["S8", "S10"]
+    },
+    {
+      "id": "upper_strength",
+      "name": "Upper-body strength",
+      "for_stats": ["Bench press (reps at 225 lb)", "Bench press"],
+      "goal": "Stronger pressing without shoulder trouble.",
+      "added_to": "Replaces the pressing exercise on strength days.",
+      "work": [
+        {"name": "Barbell bench press (Development) / dumbbell bench press (Foundation)", "foundation": "3 × 8–10", "development": "4 × 4–6", "rest": "2–3 min"},
+        {"name": "Push-up with pause at the bottom", "foundation": "2 × 8", "development": "3 × 10", "rest": "1 min"},
+        {"name": "Extra row or pull-up set to match every pressing set", "foundation": "match press sets", "development": "match press sets", "rest": "1 min"}
+      ],
+      "notes": [
+        "Always use a spotter on barbell bench press.",
+        "Pull at least as much as you push, to keep the shoulders balanced."
+      ],
+      "evidence": ["S1", "S2"]
+    },
+    {
+      "id": "throwing_velocity",
+      "name": "Throwing velocity",
+      "for_stats": ["Fastball velocity", "Infield throwing velocity", "Outfield throwing velocity"],
+      "goal": "Throw harder by getting stronger and more powerful, without raising arm risk.",
+      "added_to": "Medicine ball work on strength days; throwing on 3–4 separate days a week.",
+      "work": [
+        {"name": "Rotational medicine ball throw into a wall (3–4 kg)", "foundation": "3 × 5 each side", "development": "4 × 5 each side", "rest": "1 min"},
+        {"name": "Step-behind medicine ball throw (2–3 kg)", "foundation": "2 × 5", "development": "3 × 5", "rest": "1 min"},
+        {"name": "Interval throwing program with a regular 5 oz baseball, distance building over the weeks", "foundation": "3–4 days a week", "development": "3–4 days a week", "rest": "At least 1 day between hard throwing days"},
+        {"name": "Arm-care band work: external rotation, rows, Y-T-W raises", "foundation": "2 × 12 each", "development": "2 × 15 each", "rest": "30 s"}
+      ],
+      "notes": [
+        "No weighted-ball (overload) throwing in any plan.",
+        "After a throwing break, build back up over 4–6 weeks (ages 13–14) or 6–8 weeks (ages 15–18) before pitching off a mound.",
+        "Follow Pitch Smart pitch counts and rest days in games. Don't pitch on three days in a row.",
+        "Take at least 4 months a year off competitive pitching, with 2–3 months in a row of no overhead throwing.",
+        "Don't catch on days off from pitching.",
+        "Any arm pain: stop throwing and get it checked."
+      ],
+      "evidence": ["S5", "S6", "S7", "S12", "S14"]
+    },
+    {
+      "id": "catcher_pop",
+      "name": "Catcher pop time",
+      "for_stats": ["Catcher pop time"],
+      "goal": "Quicker transfer and footwork, and a stronger throw.",
+      "added_to": "Throwing days, plus the throwing velocity strength and medicine ball work.",
+      "work": [
+        {"name": "Transfer drill: receive and get to a throwing grip, no throw", "foundation": "3 × 10", "development": "3 × 15", "rest": "30 s"},
+        {"name": "Footwork-only reps to second base (no throw)", "foundation": "3 × 5", "development": "4 × 5", "rest": "45 s"},
+        {"name": "Full throws to second base", "foundation": "8–10 throws", "development": "10–15 throws", "rest": "30–45 s between throws"}
+      ],
+      "notes": [
+        "Full throws count toward the day's throwing.",
+        "Pitchers who also catch: don't catch on rest days from pitching."
+      ],
+      "evidence": ["S5", "S12"]
+    },
+    {
+      "id": "rotational_power",
+      "name": "Rotational power",
+      "for_stats": ["Exit velocity", "Shot put", "Discus"],
+      "goal": "Turn hip and trunk rotation into speed in the bat or the implement.",
+      "added_to": "Strength A and Strength B, before the lifts.",
+      "work": [
+        {"name": "Rotational medicine ball scoop toss into a wall (3–5 kg)", "foundation": "3 × 5 each side", "development": "4 × 5 each side", "rest": "1 min"},
+        {"name": "Medicine ball shot-put throw from the side stance", "foundation": "2 × 5 each side", "development": "3 × 5 each side", "rest": "1 min"},
+        {"name": "Landmine rotation", "foundation": "none", "development": "3 × 6 each side", "rest": "1 min"},
+        {"name": "Sport skill at full intent (tee swings or standing throws)", "foundation": "15–20 quality reps", "development": "20–30 quality reps", "rest": "As needed"}
+      ],
+      "notes": [
+        "A lighter ball thrown fast beats a heavy ball thrown slowly.",
+        "Throws technique comes from the athlete's event coach; this plan builds the power behind it."
+      ],
+      "evidence": ["S13", "S1"]
+    },
+    {
+      "id": "speed_endurance",
+      "name": "Speed endurance",
+      "for_stats": ["400 m", "300 m hurdles", "110 m hurdles", "100 m hurdles"],
+      "goal": "Hold speed longer.",
+      "added_to": "One extra running day a week, plus the sprint speed module on strength days.",
+      "work": [
+        {"name": "Repeat runs at about 85–90% effort", "foundation": "3–4 × 150 m", "development": "4–6 × 150–200 m", "rest": "4–6 min walking"},
+        {"name": "Hurdle mobility walkovers (hurdle events only)", "foundation": "2 × 6 hurdles", "development": "3 × 6 hurdles", "rest": "30 s"},
+        {"name": "Hurdle rhythm runs over low hurdles (hurdle events only)", "foundation": "3–4 runs", "development": "4–6 runs", "rest": "2–3 min"}
+      ],
+      "notes": [
+        "Never on the day after a hard strength day.",
+        "Hurdle technique comes from the athlete's event coach."
+      ],
+      "evidence": ["S4", "S15"]
+    },
+    {
+      "id": "endurance",
+      "name": "Distance running",
+      "for_stats": ["800 m", "1600 m"],
+      "goal": "A bigger aerobic base and better pace control.",
+      "added_to": "Running days on top of 2 strength days (Strength A and B only).",
+      "work": [
+        {"name": "Easy runs at conversation pace", "foundation": "2–3 × 20–30 min a week", "development": "3 × 30–45 min a week", "rest": "—"},
+        {"name": "Steady tempo run", "foundation": "none", "development": "1 × 15–20 min at a comfortably hard pace", "rest": "—"},
+        {"name": "Intervals at goal race pace", "foundation": "1 × (6 × 200 m)", "development": "1 × (5–6 × 400 m)", "rest": "Equal time jogging"},
+        {"name": "Strides", "foundation": "4 × 80 m after an easy run", "development": "6 × 100 m after an easy run", "rest": "Walk back"}
+      ],
+      "notes": [
+        "Increase weekly running time slowly; a bigger week is followed by an easier one.",
+        "At least one full rest day a week.",
+        "Shin, foot or hip pain that gets worse while running: stop and get it checked."
+      ],
+      "evidence": ["S15", "S1"]
+    }
+  ],
+
+  "not_trainable": [
+    {"stat": "Height", "message": "Height isn't something a training plan can change. The plan focuses on the numbers the athlete can move."},
+    {"stat": "Weight", "message": "Weight changes for teens should be planned with the athlete's doctor or a registered dietitian. The plan doesn't set weight or calorie targets."}
+  ],
+
+  "plan_rules": [
+    "Pick at most 2 focus modules: the trainable stats with the biggest gap to the next level, in the athlete's chosen sport(s).",
+    "Foundation: Strength A and B on non-consecutive days. Development: Strength A, B and C on non-consecutive days.",
+    "Focus work goes at the start of a session, after the warm-up, before the lifts.",
+    "Total hard days per week (strength, sprint, throwing at intent, interval runs) never exceed 4 in Foundation or 5 in Development, counting team practices the family enters.",
+    "Every plan shows the safety notes for its modules plus: 'Stop and tell a parent or coach about any pain. Pain is not part of training.'",
+    "Training replaces some practice time rather than piling on top of a full sport schedule."
+  ],
+
+  "sources": {
+    "S1": {"title": "Position statement on youth resistance training: the 2014 International Consensus", "cite": "Lloyd RS et al. Br J Sports Med 2014;48:498–505"},
+    "S2": {"title": "Youth resistance training: updated position statement paper from the NSCA", "cite": "Faigenbaum AD et al. J Strength Cond Res 2009;23(5 Suppl):S60–79"},
+    "S3": {"title": "Canadian Society for Exercise Physiology position paper: resistance training in children and adolescents", "cite": "Behm DG et al. Appl Physiol Nutr Metab 2008"},
+    "S4": {"title": "NSCA position statement on long-term athletic development", "cite": "Lloyd RS et al. J Strength Cond Res 2016;30(6):1491–1509"},
+    "S5": {"title": "Pitch Smart pitching guidelines (ages 13–14, 15–18)", "cite": "MLB and USA Baseball, mlb.com/pitch-smart"},
+    "S6": {"title": "Pitch Smart preseason throwing program", "cite": "MLB and USA Baseball"},
+    "S7": {"title": "Effect of a 6-week weighted baseball throwing program on pitch velocity, pitching arm biomechanics, passive range of motion, and injury rates", "cite": "Reinold MM et al. Sports Health 2018"},
+    "S8": {"title": "Effects of plyometric jump training on jump and sprint performance in young male soccer players", "cite": "Ramirez-Campillo R et al. Sports Med 2020;50:2125–2143"},
+    "S9": {"title": "Effects of vest and sled resisted sprint training on sprint performance in young soccer players", "cite": "Fernández-Galván LM et al. J Strength Cond Res 2022;36(7):2023–2034"},
+    "S10": {"title": "Effects of resisted sprint training on sprint, jump, and change-of-direction performance in athletes", "cite": "Li C, Chen L, Zhang Q. Front Physiol 2025;16:1711992"},
+    "S11": {"title": "Including the Nordic hamstring exercise in injury prevention programmes halves the rate of hamstring injuries", "cite": "van Dyk N et al. Br J Sports Med 2019"},
+    "S12": {"title": "Strength training for throwing velocity enhancement in overhead throw: a systematic review and meta-analysis", "cite": "Systematic review and meta-analysis, 2021 (16 studies, 424 athletes)"},
+    "S13": {"title": "Effect of torso rotational strength on angular hip, angular shoulder, and linear bat velocities of high school baseball players", "cite": "Szymanski DJ et al. J Strength Cond Res 2007"},
+    "S14": {"title": "Increasing ball velocity in the overhead athlete: a meta-analysis of randomized controlled trials", "cite": "Myers NL et al. J Strength Cond Res 2015"},
+    "S15": {"title": "Youth running consensus statement: minimising risk of injury and illness in youth runners", "cite": "Krabak BJ et al. Br J Sports Med 2021;55(6):305–318"},
+    "S16": {"title": "Promotion of healthy weight-control practices in young athletes (AAP clinical report)", "cite": "American Academy of Pediatrics"}
+  }
+}

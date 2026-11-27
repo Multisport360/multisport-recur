@@ -5,14 +5,31 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The old site. Never linted, never imported.
+    "legacy/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
+  {
+    rules: {
+      // legacy/ must never be imported (see CLAUDE.md).
+      "no-restricted-imports": [
+        "error",
+        { patterns: [{ group: ["**/legacy/**"], message: "Never import from legacy/." }] },
+      ],
+      "no-console": ["error", { allow: ["warn", "error"] }],
+    },
+  },
+  {
+    // Command-line scripts report progress on stdout.
+    files: ["scripts/**"],
+    rules: { "no-console": "off" },
+  },
 ]);
 
 export default eslintConfig;
